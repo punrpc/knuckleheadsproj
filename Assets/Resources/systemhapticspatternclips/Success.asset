@@ -1,0 +1,82 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ade706f10b951704cb8dcd1bc0627aae, type: 3}
+  m_Name: Success
+  m_EditorClassIdentifier:
+  version:
+    major: 1
+    minor: 0
+    patch: 0
+  metadata:
+    editor: Meta Haptics Studio 2.0.0
+    source:
+    project: Success
+    tags: []
+    description:
+  signals:
+    continuous:
+      envelopes:
+        amplitude:
+        - time: 0
+          amplitude: 0
+          emphasis:
+            amplitude: 0
+            frequency: 0
+        - time: 5E-06
+          amplitude: 0
+          emphasis:
+            amplitude: 0
+            frequency: 0
+        - time: 1E-05
+          amplitude: 0
+          emphasis:
+            amplitude: 0
+            frequency: 0
+        - time: 1.5E-05
+          amplitude: 0.20098963
+          emphasis:
+            amplitude: 0.59847003
+            frequency: 0.5
+        - time: 0.022725219
+          amplitude: 0
+          emphasis:
+            amplitude: 0
+            frequency: 0
+        - time: 0.02273022
+          amplitude: 0
+          emphasis:
+            amplitude: 0
+            frequency: 0
+        - time: 0.12502012
+          amplitude: 0
+          emphasis:
+            amplitude: 1
+            frequency: 0.85
+        - time: 0.12502511
+          amplitude: 0.90309864
+          emphasis:
+            amplitude: 0
+            frequency: 0
+        - time: 0.17507182
+          amplitude: 0
+          emphasis:
+            amplitude: 0
+            frequency: 0
+        frequency:
+        - time: 0
+          frequency: 0
+        - time: 5E-06
+          frequency: 0.60299623
+        - time: 0.120769955
+          frequency: 1
+        - time: 0.17507182
+          frequency: 1

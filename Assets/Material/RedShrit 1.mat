@@ -1,0 +1,66 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: RedShrit 1
+  m_Shader: {fileID: 4800000, guid: c8c9b6b06a4e08d45894e44c1bdbe67c, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords:
+  - _ALPHATEST_ON
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: 2450
+  stringTagMap: {}
+  disabledShaderPasses:
+  - MOTIONVECTORS
+  m_LockedProperties:
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+      _BaseMap:
+        m_Texture: {fileID: 2800000, guid: 034ca10bccb525a4f9d13e38a30a3613, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: {}
+    m_Floats:
+      _AddPrecomputedVelocity: 0
+      _AlphaClip: 1
+      _AlphaToMask: 1
+      _Ambient: 1
+      _Blend: 0
+      _BlendOp: 0
+      _Bottom: 0.47
+      _CamClip: 0
+      _Cull: 2
+      _Cutoff: 0.904
+      _DstBlend: 0
+      _DstBlendAlpha: 0
+      _FadeEnd: 20
+      _FadeStart: 12
+      _FadeTop: 0
+      _QueueOffset: 0
+      _SampleGI: 0
+      _SrcBlend: 1
+      _SrcBlendAlpha: 1
+      _Surface: 0
+      _Top: -0.4
+      _WorldSpace: 0
+      _Wrap: 0.5
+      _XRMotionVectorsPass: 1
+      _ZWrite: 1
+    m_Colors:
+      _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+      _BottomColor: {r: 0, g: 0, b: 0, a: 1}
+      _Color: {r: 1, g: 1, b: 1, a: 1}
+      _Direction: {r: 0, g: 0, b: 1, a: 0}
+      _TopColor: {r: 1, g: 0.37576765, b: 0.3226415, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 0

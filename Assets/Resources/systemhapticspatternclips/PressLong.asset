@@ -1,0 +1,89 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ade706f10b951704cb8dcd1bc0627aae, type: 3}
+  m_Name: PressLong
+  m_EditorClassIdentifier:
+  version:
+    major: 1
+    minor: 0
+    patch: 0
+  metadata:
+    editor: Meta Haptics Studio 2.0.0
+    source: ../../../../fbsource/arvr/apps/SystemShell/VrShell/assets/audio/shell_ui_button_general.ogg
+    project: Press_Long
+    tags: []
+    description:
+  signals:
+    continuous:
+      envelopes:
+        amplitude:
+        - time: 0
+          amplitude: 0
+          emphasis:
+            amplitude: 0
+            frequency: 0
+        - time: 5E-06
+          amplitude: 0
+          emphasis:
+            amplitude: 0
+            frequency: 0
+        - time: 1E-05
+          amplitude: 0
+          emphasis:
+            amplitude: 0
+            frequency: 0
+        - time: 2E-05
+          amplitude: 0.5963194
+          emphasis:
+            amplitude: 0.5975374
+            frequency: 0.25
+        - time: 2.5E-05
+          amplitude: 0.3998956
+          emphasis:
+            amplitude: 0
+            frequency: 0
+        - time: 3E-05
+          amplitude: 0.50182706
+          emphasis:
+            amplitude: 0
+            frequency: 0
+        - time: 0.009663646
+          amplitude: 0.40073082
+          emphasis:
+            amplitude: 0
+            frequency: 0
+        - time: 0.012261508
+          amplitude: 0.1997564
+          emphasis:
+            amplitude: 0
+            frequency: 0
+        - time: 0.02474709
+          amplitude: 0
+          emphasis:
+            amplitude: 0
+            frequency: 0
+        - time: 0.028641285
+          amplitude: 0
+          emphasis:
+            amplitude: 0
+            frequency: 0
+        frequency:
+        - time: 0
+          frequency: 0
+        - time: 5E-06
+          frequency: 0
+        - time: 1E-05
+          frequency: 0.60126066
+        - time: 0.023069438
+          frequency: 0.51282537
+        - time: 0.028641285
+          frequency: 0

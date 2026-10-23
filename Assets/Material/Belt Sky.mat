@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Belt Sky
+  m_Shader: {fileID: 4800000, guid: 4bcbfd24b9cd5af40b63e5d1ae4b08ef, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties:
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+      _CloudMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: {}
+    m_Floats:
+      _CloudCoverage: 0.45
+      _CloudFade: 0.12
+      _CloudHeight: 1
+      _CloudOpacity: 0.75
+      _CloudSoftness: 0.28
+      _CloudTopFade: 0.25
+      _DomeCurve: 0.5
+      _GradientPower: 2.2
+      _HaloPower: 10
+      _HaloStrength: 0
+      _LayerAScale: 0.12
+      _LayerBScale: 0.32
+      _LayerBWeight: 0.4
+      _SunSize: 0.9997
+      _SunSoftness: 0.0004
+    m_Colors:
+      _CloudLitColor: {r: 1, g: 1, b: 1, a: 1}
+      _CloudShadeColor: {r: 0.78, g: 0.87, b: 0.95, a: 1}
+      _GroundColor: {r: 0.035, g: 0.037, b: 0.045, a: 1}
+      _HaloColor: {r: 0, g: 0, b: 0, a: 1}
+      _HorizonColor: {r: 0.035, g: 0.037, b: 0.045, a: 1}
+      _LayerASpeed: {r: 0.004, g: 0.001, b: 0, a: 0}
+      _LayerBSpeed: {r: 0.011, g: -0.003, b: 0, a: 0}
+      _SunColor: {r: 0, g: 0, b: 0, a: 1}
+      _ZenithColor: {r: 0.035, g: 0.037, b: 0.045, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 0

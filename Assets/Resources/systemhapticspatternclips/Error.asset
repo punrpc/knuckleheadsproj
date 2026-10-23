@@ -1,0 +1,159 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ade706f10b951704cb8dcd1bc0627aae, type: 3}
+  m_Name: Error
+  m_EditorClassIdentifier:
+  version:
+    major: 1
+    minor: 0
+    patch: 0
+  metadata:
+    editor: Meta Haptics Studio 2.0.0
+    source:
+    project: Error
+    tags: []
+    description:
+  signals:
+    continuous:
+      envelopes:
+        amplitude:
+        - time: 0
+          amplitude: 0
+          emphasis:
+            amplitude: 0
+            frequency: 0
+        - time: 5E-06
+          amplitude: 0
+          emphasis:
+            amplitude: 0
+            frequency: 0
+        - time: 1E-05
+          amplitude: 0
+          emphasis:
+            amplitude: 1
+            frequency: 1
+        - time: 1.5E-05
+          amplitude: 0.9013398
+          emphasis:
+            amplitude: 0
+            frequency: 0
+        - time: 0.011351276
+          amplitude: 0.8733252
+          emphasis:
+            amplitude: 0
+            frequency: 0
+        - time: 0.019857233
+          amplitude: 0
+          emphasis:
+            amplitude: 0
+            frequency: 0
+        - time: 0.019862233
+          amplitude: 0
+          emphasis:
+            amplitude: 0
+            frequency: 0
+        - time: 0.10060466
+          amplitude: 0
+          emphasis:
+            amplitude: 0
+            frequency: 0
+        - time: 0.10061466
+          amplitude: 0.6974572
+          emphasis:
+            amplitude: 0.80054444
+            frequency: 0.65
+        - time: 0.11582009
+          amplitude: 0.6753419
+          emphasis:
+            amplitude: 0
+            frequency: 0
+        - time: 0.11677841
+          amplitude: 0
+          emphasis:
+            amplitude: 0
+            frequency: 0
+        - time: 0.22501686
+          amplitude: 0
+          emphasis:
+            amplitude: 0
+            frequency: 0
+        - time: 0.22502185
+          amplitude: 0
+          emphasis:
+            amplitude: 0
+            frequency: 0
+        - time: 0.22503686
+          amplitude: 0.59362406
+          emphasis:
+            amplitude: 0.6967113
+            frequency: 0.5
+        - time: 0.23480743
+          amplitude: 0.57150877
+          emphasis:
+            amplitude: 0
+            frequency: 0
+        - time: 0.24120061
+          amplitude: 0
+          emphasis:
+            amplitude: 0
+            frequency: 0
+        - time: 0.24120562
+          amplitude: 0
+          emphasis:
+            amplitude: 0
+            frequency: 0
+        - time: 0.24121061
+          amplitude: 0
+          emphasis:
+            amplitude: 0
+            frequency: 0
+        - time: 0.35017416
+          amplitude: 0
+          emphasis:
+            amplitude: 0
+            frequency: 0
+        - time: 0.35017917
+          amplitude: 0
+          emphasis:
+            amplitude: 0
+            frequency: 0
+        - time: 0.35019916
+          amplitude: 0.7961204
+          emphasis:
+            amplitude: 0.89920765
+            frequency: 0.1
+        - time: 0.37293476
+          amplitude: 0.7740051
+          emphasis:
+            amplitude: 0
+            frequency: 0
+        - time: 0.37932795
+          amplitude: 0
+          emphasis:
+            amplitude: 0
+            frequency: 0
+        - time: 0.38511235
+          amplitude: 0
+          emphasis:
+            amplitude: 0
+            frequency: 0
+        frequency:
+        - time: 0
+          frequency: 0
+        - time: 5E-06
+          frequency: 1
+        - time: 0.050630696
+          frequency: 1
+        - time: 0.3835444
+          frequency: 0.3970296
+        - time: 0.38511235
+          frequency: 0
