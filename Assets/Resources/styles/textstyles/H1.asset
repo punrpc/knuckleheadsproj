@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: H1
   m_EditorClassIdentifier:
   textAlignement: 3
-  font: {fileID: 12800000, guid: a53100c9baee084458cc1c0abdd5045b, type: 3}
+  font: {fileID: 12800000, guid: ec2b3a3019d86174cae268a684d8cf26, type: 3}
   fontSize: 12
   fontStyle: 1
   color: {r: 0.3254717, g: 0.557969, b: 1, a: 1}

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using Fusion;
 using TMPro;
 using UnityEngine;
@@ -412,21 +413,47 @@ namespace Ragdoll
 
 		private bool tutorialDue;
 
-		private bool asking;
+		private Transform welcome;
 
-		private bool askArmed;
+		private int welcomeStep;
 
-		private bool setup;
+		private TMP_Text welcomeTitle;
 
-		private bool setupArmed;
+		private TMP_Text welcomeLine;
 
-		private bool setupTape;
+		private GameObject welcomeKeys;
 
-		private TMP_Text setupHint;
+		private GameObject welcomeChoice;
 
-		private string setupHintWas;
+		private Btn welcomeDone;
 
-		private const string Question = "A = YES      B = NO      X = SETTINGS FIRST";
+		private readonly List<Btn> welcomeButtons = new List<Btn>();
+
+		private string typedName = "";
+
+		private bool welcomeTyping;
+
+		private const int NameStep = 1;
+
+		private const int TutorialStep = 2;
+
+		private const int NameMax = 12;
+
+		private const float PanelScale = 0.0028f;
+
+		private const float PanelAhead = 1.15f;
+
+		private const float RayLength = 4f;
+
+		private const string KeyRows = "1234567890|QWERTYUIOP|ASDFGHJKL|ZXCVBNM";
+
+		private const float OceanAway = 150f;
+
+		private const float OceanEye = 2.2f;
+
+		private Vector3 welcomeShift;
+
+		private Vector3 welcomeHome;
 
 		private const string SettingsKind = "SettingsTape";
 
@@ -495,6 +522,14 @@ namespace Ragdoll
 		private TMP_Text notesText;
 
 		private TMP_Text notesPage;
+
+		private TMP_Text shopTeeth;
+
+		private TMP_Text shopStatus;
+
+		private TMP_Text[] shopPrices;
+
+		private int shopTeethShown = -1;
 
 		private int tab;
 
@@ -616,7 +651,7 @@ namespace Ragdoll
 			}
 			Prefs.Apply();
 			ApplyTurn();
-			if (tutorialOn && !Prefs.tutorialDone && boot && SceneManager.GetActiveScene().name != tutorialScene && string.IsNullOrEmpty(Environment.GetEnvironmentVariable("PCGAME_SESSION")))
+			if (((tutorialOn && !Prefs.tutorialDone) || NeedsName()) && boot && SceneManager.GetActiveScene().name != tutorialScene && string.IsNullOrEmpty(Environment.GetEnvironmentVariable("PCGAME_SESSION")))
 			{
 				if (player)
 				{
@@ -642,6 +677,15 @@ namespace Ragdoll
 			{
 				Destroy(screenMesh);
 			}
+			if (welcomeTyping)
+			{
+				Keyboard keyboard = Keyboard.current;
+				if (keyboard != null)
+				{
+					keyboard.onTextInput -= Typed;
+				}
+			}
+			welcomeTyping = false;
 		}
 
 		private static int ScreenSlot(Material[] mats)
@@ -1573,33 +1617,26 @@ namespace Ragdoll
 			if (tutorialDue && !GameManager.BetaShowing)
 			{
 				tutorialDue = false;
-				if (!GameManager.main)
+				if (NeedsName())
 				{
-					if (player)
-					{
-						player.blackout = 1f;
-					}
-					boot.GoTo(tutorialScene, "");
+					Welcome(NameStep);
+				}
+				else if (!Pc())
+				{
+					Welcome(TutorialStep);
 				}
 				else
 				{
-					asking = true;
+					Prefs.tutorialDone = true;
+					Prefs.Save();
 					if (player)
 					{
-						player.frozen = true;
+						player.blackout = 0f;
 					}
-					GameManager.main.Ask("LOOKS LIKE YOU'RE NEW!", "DO THE TUTORIAL?", Question);
 				}
 			}
-			if (asking)
-			{
-				Answer();
-			}
-			if (setup)
-			{
-				Setup();
-			}
 			RefreshRooms();
+			ShowShop();
 			power = Mathf.MoveTowards(power, powerGoal, Time.deltaTime / (powerGoal > power ? powerOn : powerOff));
 			screenMat.SetFloat("_Power", power);
 			if (lit && power <= 0f && powerGoal <= 0f)
@@ -1625,6 +1662,11 @@ namespace Ragdoll
 
 		private void LateUpdate()
 		{
+			if (welcomeStep > 0)
+			{
+				PointWelcome();
+				return;
+			}
 			bool usable = shown != null && power >= 1f && leaveAt < 0f;
 			bool show = false;
 			Vector2 shownPx = Vector2.zero;
@@ -1749,7 +1791,7 @@ namespace Ragdoll
 			player.dark = Mathf.Max(player.dark, Mathf.Clamp01((Time.time - leaveAt) / 0.4f));
 			if (Time.time > leaveAt + 0.45f)
 			{
-				leaveAt = float.MaxValue;
+				leaveAt = float.PositiveInfinity;
 				NetworkManager.Load(gameScene);
 			}
 		}
@@ -1977,6 +2019,13 @@ namespace Ragdoll
 				Transform next = Deep(canvas.transform, "Notes Next");
 				notesPrev = prev ? prev.gameObject : null;
 				notesNext = next ? next.gameObject : null;
+				shopTeeth = Text(canvas.transform, "Shop Teeth");
+				shopStatus = Text(canvas.transform, "Shop Status");
+				shopPrices = new TMP_Text[Account.Packs.Length];
+				for (int i = 0; i < shopPrices.Length; i++)
+				{
+					shopPrices[i] = Text(canvas.transform, "Shop Price " + (i + 1));
+				}
 				if (notesText && changelog)
 				{
 					notesText.enableAutoSizing = true;
@@ -2154,7 +2203,20 @@ namespace Ragdoll
 					keep.Add(map.scene);
 				}
 			}
-			return string.Join(";", keep);
+			return skipped.Count >= keep.Count ? string.Join(";", keep) : "!" + string.Join(";", skipped);
+		}
+
+		private static int Kept(string list)
+		{
+			int kept = 0;
+			foreach (GameManager.Map map in Maps())
+			{
+				if (GameManager.Allowed(list, map.scene))
+				{
+					kept++;
+				}
+			}
+			return kept;
 		}
 
 		private void ShowMaps(RoomPage r)
@@ -2541,7 +2603,7 @@ namespace Ragdoll
 				}
 				if (r.kindHint)
 				{
-					r.kindHint.text = newOpen ? "ANYONE CAN FIND IT IN THE LIST" : "ONLY PEOPLE WITH THE CODE CAN JOIN";
+					r.kindHint.text = newOpen ? "ANYONE CAN FIND IT IN THE LIST" : "ONLY PEOPLE WITH THE CODE CAN JOIN  <color=#FF8C8C>NO XP OR WINS</color>";
 				}
 				if (r.roomCode)
 				{
@@ -2561,7 +2623,7 @@ namespace Ragdoll
 				}
 				if (r.host)
 				{
-					r.host.text = (boot.IsHost ? "YOU ARE THE HOST" : "WAITING FOR THE HOST") + (boot.RoomTeams() > 0 ? "   TEAMS MODE" : (boot.RoomTeams() < 0 ? "   ROUNDS MODE" : "")) + ((boot.RoomMaps() == "") ? "" : ("   " + boot.RoomMaps().Split(';').Length + " MAPS"));
+					r.host.text = (boot.IsHost ? "YOU ARE THE HOST" : "WAITING FOR THE HOST") + (boot.RoomTeams() > 0 ? "   TEAMS MODE" : (boot.RoomTeams() < 0 ? "   ROUNDS MODE" : "")) + ((boot.RoomMaps() == "") ? "" : ("   " + Kept(boot.RoomMaps()) + " MAPS"));
 				}
 				if (r.errorText)
 				{
@@ -2984,173 +3046,441 @@ namespace Ragdoll
 			ShowSettings();
 		}
 
-		private void Answer()
+		private static bool Pc()
 		{
-			bool yes = Button(XRNode.RightHand, CommonUsages.primaryButton);
-			bool no = Pressed(CommonUsages.secondaryButton);
-			bool settings = Button(XRNode.LeftHand, CommonUsages.primaryButton);
-			Keyboard keyboard = Keyboard.current;
-			if (keyboard != null)
+			if (Application.platform == RuntimePlatform.WindowsPlayer)
 			{
-				yes |= keyboard.yKey.isPressed;
-				no |= keyboard.nKey.isPressed;
-				settings |= keyboard.sKey.isPressed;
+				return true;
 			}
-			if (!yes && !no && !settings)
+			if (Application.isEditor)
 			{
-				askArmed = true;
-				return;
+				return Environment.GetEnvironmentVariable("PCGAME_ASKNAME") == "1";
 			}
-			if (!askArmed)
+			return false;
+		}
+
+		private static bool NeedsName()
+		{
+			Prefs.Load();
+			return Pc() && string.IsNullOrEmpty(Prefs.nick);
+		}
+
+		private void Welcome(int step)
+		{
+			if (!welcome && !BuildWelcome())
 			{
-				return;
-			}
-			if (settings)
-			{
-				if (yes || no)
-				{
-					return;
-				}
-				asking = false;
-				Player.Note("new player opened the settings before the tutorial");
-				if (GameManager.main)
-				{
-					GameManager.main.Answered();
-				}
+				Player.Note("welcome panel could not be built");
 				if (player)
 				{
-					player.frozen = false;
+					player.blackout = 0f;
 				}
-				setupTape = false;
-				setup = true;
-				setupArmed = false;
-				tab = 1;
 				return;
 			}
-			if (yes && no)
+			welcomeStep = step;
+			welcomeKeys.SetActive(step == NameStep);
+			welcomeChoice.SetActive(step == TutorialStep);
+			welcomeTitle.text = step == NameStep ? "ENTER A NAME" : "LOOKS LIKE YOU'RE NEW!";
+			if (step == NameStep)
+			{
+				ShowName();
+			}
+			else
+			{
+				welcomeLine.text = "PLAY THE TUTORIAL?";
+			}
+			if (player)
+			{
+				player.blackout = 0f;
+				player.Float(true);
+				if (welcomeShift == Vector3.zero)
+				{
+					ToSea();
+				}
+			}
+			Place();
+			welcome.gameObject.SetActive(true);
+			if (step == NameStep && !welcomeTyping)
+			{
+				Keyboard keyboard = Keyboard.current;
+				if (keyboard != null)
+				{
+					keyboard.onTextInput += Typed;
+					welcomeTyping = true;
+				}
+			}
+			Player.Note("welcome panel: " + welcomeTitle.text + " " + welcomeLine.text);
+		}
+
+		private void CloseWelcome()
+		{
+			welcomeStep = 0;
+			if (welcome)
+			{
+				welcome.gameObject.SetActive(false);
+			}
+			foreach (Pointer p in pointers)
+			{
+				if (p != null)
+				{
+					Hover(p, null);
+					Press(p.down, false);
+					p.down = null;
+					SetLine(p, false, Vector3.zero, Vector3.zero);
+				}
+			}
+			if (player && welcomeShift != Vector3.zero)
+			{
+				player.Shift(welcomeHome - player.pelvis.position);
+				player.playSpace.position -= welcomeShift;
+			}
+			welcomeShift = Vector3.zero;
+			if (player)
+			{
+				player.Float(false);
+			}
+			if (welcomeTyping)
+			{
+				Keyboard keyboard = Keyboard.current;
+				if (keyboard != null)
+				{
+					keyboard.onTextInput -= Typed;
+				}
+			}
+			welcomeTyping = false;
+		}
+
+		private void ToSea()
+		{
+			if (!player.cam || !player.playSpace)
 			{
 				return;
 			}
-			asking = false;
-			if (yes)
+			Vector3 eye = player.cam.position;
+			Vector3 forward = player.cam.forward;
+			Vector3 flat = forward.x * forward.x + forward.z * forward.z < 0.01f ? Vector3.forward : new Vector3(forward.x, 0f, forward.z);
+			flat = flat.normalized;
+			welcomeHome = player.pelvis.position;
+			float sea = Water.main ? Water.main.Surface : eye.y - 1.6f;
+			Vector3 to = eye + flat * OceanAway;
+			to.y = sea + OceanEye;
+			welcomeShift = to - eye;
+			player.Shift(welcomeShift);
+			player.playSpace.position += welcomeShift;
+		}
+
+		private bool BuildWelcome()
+		{
+			Transform root = null;
+			foreach (Cassette c in cassettes)
 			{
-				Player.Note("new player chose the tutorial");
-				if (GameManager.main)
+				Canvas canvas = c.page ? c.page.GetComponentInParent<Canvas>(true) : null;
+				if (canvas)
 				{
-					GameManager.main.Answered();
+					root = canvas.transform;
+					break;
 				}
-				if (player)
+			}
+			Transform key = root ? Deep(root, "Key 1") : null;
+			Transform go = root ? Deep(root, "Key GO") : null;
+			Transform del = root ? Deep(root, "Key DEL") : null;
+			Transform yes = root ? Deep(root, "New Room") : null;
+			Transform no = del;
+			TMP_Text title = root ? Text(root, "Title") : null;
+			TMP_Text line = root ? Text(root, "Code") : null;
+			if (!key || !go || !del || !yes || !no || !title || !line)
+			{
+				return false;
+			}
+			GameObject panel = new GameObject("Welcome Panel", typeof(RectTransform));
+			panel.AddComponent<Canvas>().renderMode = RenderMode.WorldSpace;
+			RectTransform rect = (RectTransform)panel.transform;
+			rect.sizeDelta = new Vector2(380f, 300f);
+			rect.localScale = Vector3.one * PanelScale;
+			welcome = panel.transform;
+			welcomeTitle = Label(title, welcome, new Vector2(0f, 120f), new Vector2(380f, 44f));
+			welcomeLine = Label(line, welcome, new Vector2(0f, 82f), new Vector2(360f, 34f));
+			welcomeKeys = Group(welcome, "Keys");
+			welcomeChoice = Group(welcome, "Choice");
+			string[] rows = KeyRows.Split('|');
+			for (int r = 0; r < rows.Length; r++)
+			{
+				float y = r * -36f + 40f;
+				for (int i = 0; i < rows[r].Length; i++)
 				{
-					player.blackout = 1f;
+					char c = rows[r][i];
+					MakeKey(key, welcomeKeys.transform, new Vector2((i + (rows[r].Length - 1) * -0.5f) * 34f, y), new Vector2(30f, 30f), c.ToString(), () => TypeName(c));
 				}
-				boot.GoTo(tutorialScene, "");
+			}
+			MakeKey(key, welcomeKeys.transform, new Vector2(-104f, -106f), new Vector2(130f, 30f), "SPACE", () => TypeName(' '));
+			MakeKey(del, welcomeKeys.transform, new Vector2(18f, -106f), new Vector2(98f, 30f), "DEL", EraseName);
+			welcomeDone = MakeKey(go, welcomeKeys.transform, new Vector2(122f, -106f), new Vector2(98f, 30f), "DONE", NameDone);
+			MakeKey(yes, welcomeChoice.transform, new Vector2(-74f, 10f), new Vector2(124f, 50f), "YES", TutorialYes);
+			MakeKey(no, welcomeChoice.transform, new Vector2(74f, 10f), new Vector2(124f, 50f), "NO", TutorialNo);
+			foreach (Transform t in panel.GetComponentsInChildren<Transform>(true))
+			{
+				t.gameObject.layer = 0;
+			}
+			panel.SetActive(false);
+			return true;
+		}
+
+		private static GameObject Group(Transform parent, string name)
+		{
+			GameObject go = new GameObject(name, typeof(RectTransform));
+			go.transform.SetParent(parent, false);
+			return go;
+		}
+
+		private static TMP_Text Label(TMP_Text from, Transform parent, Vector2 at, Vector2 size)
+		{
+			TMP_Text label = Instantiate(from.gameObject, parent).GetComponent<TMP_Text>();
+			RectTransform rect = label.rectTransform;
+			rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+			rect.sizeDelta = size;
+			rect.anchoredPosition = at;
+			label.enableAutoSizing = true;
+			label.fontSizeMin = 8f;
+			label.fontSizeMax = size.y * 0.8f;
+			label.alignment = TextAlignmentOptions.Center;
+			return label;
+		}
+
+		private Btn MakeKey(Transform from, Transform parent, Vector2 at, Vector2 size, string label, UnityAction act)
+		{
+			RectTransform rect = (RectTransform)Instantiate(from.gameObject, parent).transform;
+			rect.name = "Key " + label;
+			float height = rect.rect.height;
+			rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+			rect.sizeDelta = size;
+			rect.anchoredPosition = at;
+			foreach (RectTransform child in rect.GetComponentsInChildren<RectTransform>(true))
+			{
+				if (child != rect && child.anchorMin == child.anchorMax)
+				{
+					child.sizeDelta = size;
+				}
+			}
+			foreach (Image image in rect.GetComponentsInChildren<Image>(true))
+			{
+				image.pixelsPerUnitMultiplier = height / size.y * image.pixelsPerUnitMultiplier;
+			}
+			TMP_Text text = rect.GetComponentInChildren<TMP_Text>(true);
+			if (text)
+			{
+				text.text = label;
+				text.enableAutoSizing = true;
+				text.fontSizeMin = 6f;
+				text.fontSizeMax = size.y * 0.62f;
+			}
+			Button button = rect.GetComponentInChildren<Button>(true);
+			button.onClick = new Button.ButtonClickedEvent();
+			button.onClick.AddListener(act);
+			button.interactable = true;
+			Image face = button.targetGraphic as Image;
+			if (!face)
+			{
+				face = button.GetComponent<Image>();
+			}
+			RectTransform faceRect = (RectTransform)button.transform;
+			Btn b = new Btn
+			{
+				button = button,
+				face = faceRect,
+				image = face,
+				color = face ? face.color : Color.white,
+				rest = faceRect.anchoredPosition
+			};
+			welcomeButtons.Add(b);
+			return b;
+		}
+
+		private void Place()
+		{
+			Transform view = (player && player.cam) ? player.cam : (Camera.main ? Camera.main.transform : null);
+			if (!view)
+			{
 				return;
 			}
+			Vector3 forward = view.forward;
+			Vector3 flat = forward.x * forward.x + forward.z * forward.z < 0.01f ? Vector3.forward : new Vector3(forward.x, 0f, forward.z);
+			flat = flat.normalized;
+			welcome.SetPositionAndRotation(view.position + flat * PanelAhead + Vector3.down * 0.12f, Quaternion.LookRotation(flat, Vector3.up));
+		}
+
+		private Btn OnPanel(Vector3 at)
+		{
+			foreach (Btn b in welcomeButtons)
+			{
+				if (b.button.interactable && b.face.gameObject.activeInHierarchy && b.face.rect.Contains(b.face.InverseTransformPoint(at)))
+				{
+					return b;
+				}
+			}
+			return null;
+		}
+
+		private void PointWelcome()
+		{
+			if (player && player.inVR)
+			{
+				foreach (Pointer p in pointers)
+				{
+					if (!Aim(p, out Vector3 from, out Vector3 dir))
+					{
+						SetLine(p, false, Vector3.zero, Vector3.zero);
+						continue;
+					}
+					Vector3 end = from + dir * RayLength;
+					Btn over = null;
+					if (Vector3.Dot(dir, welcome.forward) > 0f && new Plane(welcome.forward, welcome.position).Raycast(new Ray(from, dir), out float enter) && enter < RayLength)
+					{
+						end = from + dir * enter;
+						over = OnPanel(end);
+					}
+					Hover(p, over);
+					SetLine(p, true, from, end);
+					float trigger = p.device.TryGetFeatureValue(CommonUsages.trigger, out float squeeze) ? squeeze : 0f;
+					bool down = p.held ? trigger > LetAt : trigger > PressAt;
+					if (down)
+					{
+						if (!p.held)
+						{
+							p.down = p.hover;
+							Press(p.down, true);
+						}
+					}
+					else if (p.held)
+					{
+						Press(p.down, false);
+						if (p.down != null && p.down == p.hover)
+						{
+							Click(p.down, p.node);
+						}
+						p.down = null;
+					}
+					p.held = down;
+					if (welcomeStep == 0)
+					{
+						return;
+					}
+				}
+				return;
+			}
+			Transform view = (player && player.cam) ? player.cam : (Camera.main ? Camera.main.transform : null);
+			Mouse mouse = Mouse.current;
+			Btn hit = null;
+			if (view && Vector3.Dot(view.forward, welcome.forward) > 0f && new Plane(welcome.forward, welcome.position).Raycast(new Ray(view.position, view.forward), out float distance))
+			{
+				hit = OnPanel(view.position + view.forward * distance);
+			}
+			if (hit != deskHover)
+			{
+				Glow(deskHover, false);
+				Glow(hit, true);
+				deskHover = hit;
+			}
+			bool pressed = mouse != null && mouse.leftButton.isPressed;
+			if (pressed)
+			{
+				if (!deskHeld)
+				{
+					deskDown = deskHover;
+					Press(deskDown, true);
+				}
+			}
+			else if (deskHeld)
+			{
+				Press(deskDown, false);
+				if (deskDown != null && deskDown == deskHover)
+				{
+					Click(deskDown, XRNode.Head);
+				}
+				deskDown = null;
+			}
+			deskHeld = pressed;
+		}
+
+		private void Typed(char c)
+		{
+			if (welcomeStep != NameStep)
+			{
+				return;
+			}
+			if (c == '\r' || c == '\n')
+			{
+				NameDone();
+			}
+			else if (c == '\b')
+			{
+				EraseName();
+			}
+			else if (c <= '\u007f' && (char.IsLetterOrDigit(c) || c == ' '))
+			{
+				TypeName(c);
+			}
+		}
+
+		private void TypeName(char c)
+		{
+			if (typedName.Length >= NameMax || (c == ' ' && (typedName.Length == 0 || typedName.EndsWith(" "))))
+			{
+				return;
+			}
+			typedName += char.ToUpperInvariant(c);
+			ShowName();
+		}
+
+		private void EraseName()
+		{
+			if (typedName.Length > 0)
+			{
+				typedName = typedName.Substring(0, typedName.Length - 1);
+			}
+			ShowName();
+		}
+
+		private void ShowName()
+		{
+			welcomeLine.text = typedName + (typedName.Length < NameMax ? "_" : "");
+			if (welcomeDone != null)
+			{
+				welcomeDone.button.interactable = typedName.Trim().Length > 0;
+			}
+		}
+
+		private void NameDone()
+		{
+			string name = typedName.Trim();
+			if (name == "")
+			{
+				return;
+			}
+			Prefs.Load();
+			Prefs.nick = name;
+			Prefs.tutorialDone = true;
+			Prefs.Save();
+			Player.Note("new player picked the name " + name);
+			CloseWelcome();
+		}
+
+		private void TutorialYes()
+		{
+			Player.Note("new player chose the tutorial");
+			CloseWelcome();
+			if (player)
+			{
+				player.blackout = 1f;
+			}
+			boot.GoTo(tutorialScene, "");
+		}
+
+		private void TutorialNo()
+		{
 			Prefs.Load();
 			Prefs.tutorialDone = true;
 			Prefs.Save();
 			Player.Note("new player skipped the tutorial");
-			if (GameManager.main)
-			{
-				GameManager.main.Answered();
-			}
-			if (player)
-			{
-				player.frozen = false;
-			}
-		}
-
-		private void Setup()
-		{
-			Tape t = tapes.Find((Tape x) => x.kind == SettingsKind);
-			if (t != null && !setupTape)
-			{
-				foreach (Tape other in tapes)
-				{
-					if (other != t && other.mode == In && !Holder(other.rb))
-					{
-						other.mode = Auto;
-						other.autoTo = -0.01f;
-						other.leaving = true;
-					}
-				}
-				if (t.mode == Free && !Holder(t.rb) && !Busy(t))
-				{
-					t.rb.linearVelocity = Vector3.zero;
-					t.rb.angularVelocity = Vector3.zero;
-					t.rb.isKinematic = true;
-					if (!t.ignoring)
-					{
-						Ignore(t, true);
-					}
-					t.fromPos = t.rb.position;
-					t.fromRot = t.rb.rotation;
-					t.snapAt = Time.time;
-					t.by = null;
-					t.progress = 0f;
-					t.leaving = false;
-					t.mode = Auto;
-					t.autoTo = Full(t);
-					setupTape = true;
-				}
-			}
-			if (t != null && !setupHint && t.entry.page)
-			{
-				setupHint = Text(t.entry.page.transform, "Hint");
-				if (setupHint)
-				{
-					setupHintWas = setupHint.text;
-				}
-			}
-			if (setupHint)
-			{
-				setupHint.text = "PRESS X WHEN YOU'RE READY FOR THE TUTORIAL";
-			}
-			bool ready = Button(XRNode.LeftHand, CommonUsages.primaryButton);
-			if (Keyboard.current != null)
-			{
-				ready |= Keyboard.current.sKey.isPressed;
-			}
-			if (!ready)
-			{
-				setupArmed = true;
-				return;
-			}
-			if (!setupArmed)
-			{
-				return;
-			}
-			setup = false;
-			if (setupHint)
-			{
-				setupHint.text = setupHintWas;
-			}
-			asking = true;
-			if (player)
-			{
-				player.frozen = true;
-			}
-			if (GameManager.main)
-			{
-				GameManager.main.Ask("LOOKS LIKE YOU'RE NEW!", "DO THE TUTORIAL?", Question);
-			}
-		}
-
-		private static bool Button(XRNode node, InputFeatureUsage<bool> button)
-		{
-			InputDevice device = InputDevices.GetDeviceAtXRNode(node);
-			return device.isValid && device.TryGetFeatureValue(button, out bool value) && value;
-		}
-
-		private static bool Pressed(InputFeatureUsage<bool> button)
-		{
-			InputDevice left = InputDevices.GetDeviceAtXRNode(XRNode.LeftHand);
-			InputDevice right = InputDevices.GetDeviceAtXRNode(XRNode.RightHand);
-			if (left.isValid && left.TryGetFeatureValue(button, out bool a) && a)
-			{
-				return true;
-			}
-			return right.isValid && right.TryGetFeatureValue(button, out bool b) && b;
+			CloseWelcome();
 		}
 
 		public void NotesPrev()
@@ -3203,6 +3533,41 @@ namespace Ragdoll
 			level = Mathf.Clamp01(Mathf.Round((level + by) * 10f) / 10f);
 			Prefs.Save();
 			ShowSettings();
+		}
+
+		public void OpenShop()
+		{
+			Account.OpenShop();
+		}
+
+		public void BuyTeeth(int pack)
+		{
+			Account.Buy(pack);
+		}
+
+		private void ShowShop()
+		{
+			if (!shopTeeth || !shopTeeth.gameObject.activeInHierarchy)
+			{
+				return;
+			}
+			if (shopTeethShown != Account.Teeth)
+			{
+				shopTeethShown = Account.Teeth;
+				shopTeeth.text = Account.Teeth.ToString("N0", CultureInfo.InvariantCulture);
+			}
+			if (shopStatus && shopStatus.text != Account.ShopStatus)
+			{
+				shopStatus.text = Account.ShopStatus;
+			}
+			for (int i = 0; i < shopPrices.Length; i++)
+			{
+				string price = Account.Price(i);
+				if (shopPrices[i] && shopPrices[i].text != price)
+				{
+					shopPrices[i].text = price;
+				}
+			}
 		}
 
 		private static Transform Deep(Transform root, string name)

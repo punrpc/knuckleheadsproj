@@ -432,7 +432,7 @@ namespace Ragdoll
 
 		private readonly Vector3[] ghostBase = new Vector3[3] { Vector3.one, Vector3.one, Vector3.one };
 
-		private const float GhostShow = 0.45f;
+		private const float GhostShow = 0.85f;
 
 		private const float GhostFade = 0.4f;
 
@@ -451,8 +451,6 @@ namespace Ragdoll
 		private const float TagFade = 6f;
 
 		private const float TagAbove = 0.62f;
-
-		private const float TagGhostAbove = 0.32f;
 
 		private bool shownWatching;
 
@@ -582,6 +580,9 @@ namespace Ragdoll
 
 		[Networked]
 		public NetworkString<_16> Nick { get; set; }
+
+		[Networked]
+		public int Level { get; set; }
 
 		[Networked]
 		public float KoLeft { get; set; }
@@ -1306,6 +1307,11 @@ namespace Ragdoll
 			}
 			Watching = GameManager.watching || GameManager.Outsider;
 			Owed = GameManager.Owed();
+			int level = Account.Ready ? Account.Level : 0;
+			if (Level != level)
+			{
+				Level = level;
+			}
 			if (!localBody)
 			{
 				return;
@@ -2153,8 +2159,8 @@ namespace Ragdoll
 			{
 				anchor = Dead || Watching ? null : bones[2];
 			}
-			Vector3 at = anchor ? anchor.position + Vector3.up * (ghost ? GhostSize * TagGhostAbove : TagAbove) : Vector3.zero;
-			float want = cam && anchor ? Mathf.InverseLerp(TagFar, TagNear, Vector3.Distance(cam.position, at)) : 0f;
+			Vector3 at = anchor ? anchor.position + Vector3.up * TagAbove * (ghost ? GhostSize : 1f) : Vector3.zero;
+			float want = cam && anchor ? Mathf.InverseLerp(TagFar, TagNear, Vector3.Distance(cam.position, anchor.position + Vector3.up * TagAbove)) : 0f;
 			if (ghost)
 			{
 				want *= ghostAlpha / GhostShow;
@@ -2189,7 +2195,8 @@ namespace Ragdoll
 				tagText.outlineColor = new Color32(20, 20, 30, 255);
 				tagName = null;
 			}
-			string label = Nick.Length > 0 ? Nick.Value.ToUpperInvariant() : "PLAYER " + Object.StateAuthority.PlayerId;
+			string badge = Level > 0 ? "<size=70%>" + Account.Badge(Level) + "</size>  " : "";
+			string label = badge + (Nick.Length > 0 ? Nick.Value.ToUpperInvariant() : "PLAYER " + Object.StateAuthority.PlayerId);
 			if (label != tagName)
 			{
 				tagName = label;
@@ -3257,6 +3264,15 @@ namespace Ragdoll
 			taken++;
 		}
 
+		[Rpc(RpcSources.StateAuthority, RpcTargets.Proxies)]
+		public void RPC_Teeth(int count)
+		{
+			if (bones != null && bones[1])
+			{
+				Account.Spray(bones[1], Mathf.Clamp(count, 1, 40), true);
+			}
+		}
+
 		[Rpc(RpcSources.StateAuthority, RpcTargets.All)]
 		public void RPC_Go(string game)
 		{
@@ -3281,6 +3297,12 @@ namespace Ragdoll
 		public void RPC_Glass(int pane, Vector3 point, Vector3 push)
 		{
 			Glass.Break(pane, point, push);
+		}
+
+		[Rpc(RpcSources.StateAuthority, RpcTargets.Proxies)]
+		public void RPC_Bolt(int slot, Vector3 spot)
+		{
+			Storm.Told(slot, spot);
 		}
 
 		[Rpc(RpcSources.StateAuthority, RpcTargets.Proxies)]

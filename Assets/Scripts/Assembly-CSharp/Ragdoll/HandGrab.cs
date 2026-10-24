@@ -32,6 +32,8 @@ namespace Ragdoll
 
 		private float wallGrip = 2f;
 
+		private const float TrainGrip = 10f;
+
 		private float grabbedAt;
 
 		private HandTouch touch;
@@ -204,6 +206,12 @@ namespace Ragdoll
 
 		private bool swungSincePress;
 
+		private float punchedAt = -9f;
+
+		private const float PunchGrab = 0.25f;
+
+		private const float PressWindow = 0.3f;
+
 		[HideInInspector]
 		public float tiredUntil;
 
@@ -287,28 +295,37 @@ namespace Ragdoll
 				velKnown = true;
 				velAt = (velAt + 1) % vel.Length;
 			}
-			if (forceGrab || Grip() > (grabbing ? gripHold : gripGrab))
+			bool want = forceGrab || Grip() > (grabbing ? gripHold : gripGrab);
+			bool fresh = want && !wasWant;
+			if (fresh)
 			{
-				bool was = wasWant;
-				if (!was)
-				{
-					pressedAt = Time.time;
-					swungSincePress = false;
-				}
-				else if (!grabbing && Punching())
-				{
-					swungSincePress = true;
-				}
-				wasWant = true;
+				pressedAt = Time.time;
+			}
+			bool punching = !grabbing && Punching();
+			if (punching)
+			{
+				punchedAt = Time.time;
+			}
+			if (!want || fresh)
+			{
+				swungSincePress = false;
+			}
+			else if (punching)
+			{
+				swungSincePress = true;
+			}
+			wasWant = want;
+			if (want)
+			{
 				if (OutCold())
 				{
 					dropped = true;
 				}
-				if (!grabbing)
+				if (!grabbing && (forceGrab || Time.time < regrabUntil || (Time.time <= pressedAt + PressWindow && (fresh || Time.time >= punchedAt + PunchGrab))))
 				{
-					TryGrab(!was);
+					TryGrab(fresh);
 				}
-				else if (OutCold())
+				else if (grabbing && OutCold())
 				{
 					releaseWhy = "out cold";
 					Release();
@@ -321,8 +338,6 @@ namespace Ragdoll
 			}
 			else
 			{
-				swungSincePress = false;
-				wasWant = false;
 				slippedOff = null;
 				dropped = false;
 				if (grabbing)
@@ -1300,6 +1315,42 @@ namespace Ragdoll
 			}
 		}
 
+		public void Rebind(Transform npc)
+		{
+			if (!wasWant || dropped || swungSincePress || !col || !npc)
+			{
+				return;
+			}
+			if (grabbing && (!onWall || !OnGround()))
+			{
+				return;
+			}
+			Bounds box = col.bounds;
+			Vector3 center = box.center;
+			box.Expand(reach + reach);
+			Grabbable grab = npc.GetComponentInChildren<Grabbable>();
+			float far = Mathf.Max(reach, grab ? grab.reach : -1f);
+			int n = Physics.OverlapBoxNonAlloc(box.center, box.extents, hits, Quaternion.identity, -1, QueryTriggerInteraction.Ignore);
+			for (int i = 0; i < n; i++)
+			{
+				if (!hits[i].transform.IsChildOf(npc))
+				{
+					continue;
+				}
+				Vector3 p = hits[i] is MeshCollider mesh && !mesh.convex ? hits[i].bounds.ClosestPoint(center) : hits[i].ClosestPoint(center);
+				if (Vector3.Distance(p, center) < far)
+				{
+					if (grabbing)
+					{
+						releaseWhy = "rebind";
+						Release();
+					}
+					TryGrab(true);
+					return;
+				}
+			}
+		}
+
 		public void Release()
 		{
 			lastRelease = releaseWhy ?? "other";
@@ -1404,8 +1455,12 @@ namespace Ragdoll
 			body.isKinematic = true;
 			body.useGravity = false;
 			g = hold.AddComponent<Grabbable>();
-			worldHold = hold;
 			g.holdsYou = true;
+			if (TrainWreck.Car(c))
+			{
+				g.climbTime = TrainGrip;
+			}
+			worldHold = hold;
 			worldWall = c;
 			topHold = touch.worldTop;
 			return true;

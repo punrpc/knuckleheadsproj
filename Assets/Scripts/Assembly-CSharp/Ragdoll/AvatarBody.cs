@@ -458,6 +458,8 @@ namespace Ragdoll
 
 		private float poppedAt = -9f;
 
+		private HandGrab poppedHand;
+
 		private float predictedHead;
 
 		private float releasedAt = -9f;
@@ -935,6 +937,15 @@ namespace Ragdoll
 			{
 				goalJumped = false;
 			}
+			if (!carried && !streamed && Time.time < freeUntil && (goalPos[0] - bodies[0].position).sqrMagnitude < lined * lined && bodies[0].linearVelocity.sqrMagnitude < 0.25f)
+			{
+				freeUntil = Time.time;
+				limpUntil = Time.time;
+			}
+			if (!netAvatar)
+			{
+				netAvatar = GetComponent<NetworkPlayer>();
+			}
 			float mass;
 			if (carried)
 			{
@@ -942,8 +953,9 @@ namespace Ragdoll
 			}
 			else
 			{
-				if (!streamed && Time.time < freeUntil && (goalPos[0] - bodies[0].position).sqrMagnitude < lined * lined && bodies[0].linearVelocity.sqrMagnitude < 0.25f)
+				if (!streamed && Time.time < freeUntil && netAvatar && netAvatar.Object && netAvatar.Object.IsValid && !netAvatar.Limp)
 				{
+					Player.Note("copy of " + name + " is up on their side, ending its free fall " + (freeUntil - Time.time).ToString("F1") + " s early, " + stray.ToString("F1") + " m from where the network has it");
 					freeUntil = Time.time;
 					limpUntil = Time.time;
 				}
@@ -1060,7 +1072,7 @@ namespace Ragdoll
 					rb2.linearDamping = damping;
 				}
 			}
-			if (gliding && (carried || limp || holdingMe))
+			if (gliding && (carried || limp || holdingMe || ClimbedByLocal()))
 			{
 				EndGlide();
 			}
@@ -1125,7 +1137,7 @@ namespace Ragdoll
 			{
 				stalledSteps = 0;
 			}
-			gentle = gentleMode != 0 && !passThrough && (Time.fixedTime - touchedAt <= Time.fixedDeltaTime * 1.5f || NearLocal(Reach()));
+			gentle = gentleMode != 0 && (!passThrough || ClimbedByLocal()) && (Time.fixedTime - touchedAt <= Time.fixedDeltaTime * 1.5f || NearLocal(Reach()));
 			linked = gentle && gentleMode == 5 && (holdingMe || ClimbedByLocal() || CarriedByLocal());
 			if (gentle && gentleMode == 5 && !linked)
 			{
@@ -1534,6 +1546,7 @@ namespace Ragdoll
 				netAvatar.popAt = -9f;
 			}
 			poppedAt = -9f;
+			poppedHand = null;
 			if (predictedAt < 0f)
 			{
 				return false;
@@ -1551,6 +1564,11 @@ namespace Ragdoll
 			}
 			Player.Note("copy of " + name + ": predicted KO confirmed after " + ((Time.time - poppedAt) * 1000f).ToString("F0") + " ms");
 			poppedAt = -9f;
+			if (poppedHand)
+			{
+				Player.Hand(poppedHand.node, 1f, 0.25f);
+			}
+			poppedHand = null;
 			return true;
 		}
 
@@ -1861,7 +1879,7 @@ namespace Ragdoll
 				}
 				return -1;
 			}
-			if (localFighter && (localFighter.knockedOut || localFighter.dead))
+			if (localFighter && (localFighter.knockedOut || localFighter.dead || (localFighter.flopped && (kick || fist))))
 			{
 				return -1;
 			}
@@ -2132,11 +2150,7 @@ namespace Ragdoll
 			predictedAt = Time.time;
 			predictedHead = goalAt >= 0f ? goalPos[2].y : bodies[2].position.y;
 			poppedAt = Time.time;
-			Player.KnockAt(bodies[2].position);
-			if (hand)
-			{
-				Player.Hand(hand.node, 1f, 0.25f);
-			}
+			poppedHand = hand;
 		}
 
 		private void Fists(bool on)

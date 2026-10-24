@@ -325,6 +325,8 @@ namespace Ragdoll
 
 		private const float DropWide = 0.7f;
 
+		private const float CarSpread = 2.5f;
+
 		private static readonly Collider[] dropHits = new Collider[16];
 
 		private static readonly string[] Waves = new string[9] { "S", "SS", "SN", "SSN", "SNF", "SSNN", "SNNB", "SSNFB", "SSNNFB" };
@@ -861,6 +863,7 @@ namespace Ragdoll
 
 		public static void Died()
 		{
+			Audience.Cheer();
 			if (main && main.deathSound && main.deathAudio && match != null)
 			{
 				main.deathAudio.PlayOneShot(main.deathSound, main.deathVolume * Prefs.sfx);
@@ -1689,6 +1692,10 @@ namespace Ragdoll
 			Physics.queriesHitBackfaces = true;
 			try
 			{
+				if (TrainWreck.main && Aboard(near, out Vector3 at, out why))
+				{
+					return at;
+				}
 				return Spot(near, under, out why);
 			}
 			finally
@@ -1742,6 +1749,58 @@ namespace Ragdoll
 			}
 			why = "above me, no open floor near";
 			return floor + Vector3.up * Mathf.Clamp(overhead, 2f, SkyHeight);
+		}
+
+		private static bool Aboard(Vector3 near, out Vector3 at, out string why)
+		{
+			at = near;
+			why = "";
+			if (!NetworkManager.main || NetworkManager.main.spawnPoints == null)
+			{
+				return false;
+			}
+			List<Transform> spawns = new List<Transform>(NetworkManager.main.spawnPoints);
+			spawns.RemoveAll((Transform s) => !s);
+			spawns.Sort((Transform a, Transform b) => (a.position - near).sqrMagnitude.CompareTo((b.position - near).sqrMagnitude));
+			foreach (Transform spawn in spawns)
+			{
+				if (!InCar(spawn.position, out Vector3 floor, out float drop))
+				{
+					continue;
+				}
+				at = floor + Vector3.up * drop;
+				why = "inside the train at spawn " + spawn.name;
+				for (int i = 0; i < 6; i++)
+				{
+					if (!InCar(spawn.position + new Vector3(UnityEngine.Random.Range(-CarSpread, CarSpread), 0f, UnityEngine.Random.Range(-0.5f, 0.5f)), out Vector3 spot, out float fall) || Mathf.Abs(spot.y - floor.y) > 0.3f || Walled(floor + Vector3.up, spot + Vector3.up))
+					{
+						continue;
+					}
+					at = spot + Vector3.up * fall;
+					why = "inside the train near spawn " + spawn.name;
+					break;
+				}
+				return true;
+			}
+			return false;
+		}
+
+		private static bool InCar(Vector3 p, out Vector3 floor, out float drop)
+		{
+			floor = p;
+			drop = 0f;
+			if (!Ground(p + Vector3.up * 1.5f, 6f, out RaycastHit hit) || !Landing(hit, null) || TrainWreck.Loose(hit.rigidbody))
+			{
+				return false;
+			}
+			float room = Room(hit.point);
+			if (room < 0f || Lid(hit.point + Vector3.up * 0.1f, 6f) >= 6f)
+			{
+				return false;
+			}
+			drop = Mathf.Clamp(room, 0.05f, SkyHeight);
+			floor = hit.point;
+			return !Taken(hit.point, drop);
 		}
 
 		private static bool Spawned(Vector3 foot, out Vector3 at, out string name)
@@ -2234,7 +2293,22 @@ namespace Ragdoll
 			{
 				Banner(TeamName(team) + " WINS!", TeamColour(team), Scores(true), round);
 			}
+			if (!watching && !deserted)
+			{
+				Reward(team, id);
+			}
 			Player.Note("round " + match.round + (deserted ? " ended, everyone else left" : ((id == OutOfTime) ? " ran out of time, nobody wins" : (" won by " + ((winner == "") ? "nobody" : ((team <= 0) ? Name(winner) : TeamName(team)))))) + ", " + Scores(false));
+		}
+
+		private void Reward(int team, string id)
+		{
+			Score me = match.scores.Find((Score s) => s.id == MyId);
+			bool won = team > 0 ? TeamOf(MyId) == team : winner == MyId;
+			bool champion = me != null && !Rounds && won && Wins >= 3 && me.wins >= Wins;
+			bool wave = Rounds && (id == Cleared || id == OutOfTime);
+			int players = NetworkPlayer.avatars.FindAll((NetworkPlayer a) => a && a.Object && a.Object.IsValid && !a.Watching).Count;
+			bool alive = NetworkPlayer.mine && NetworkPlayer.mine.Object && NetworkPlayer.mine.Object.IsValid && !NetworkPlayer.mine.Dead;
+			Account.Round(won, champion, wave, players, alive, Rounds ? "rounds" : (match.teams > 0 ? "teams" : "normal"));
 		}
 
 		private bool Decided()
@@ -2387,12 +2461,20 @@ namespace Ragdoll
 				Player.Note(dropped + " player(s) left the match, dropped from the scores");
 			}
 			int expect = Count(out int _, out NetworkPlayer _);
-			if (!end)
+			if (!end && !Rounds)
 			{
 				expect += Enlist();
 			}
 			bool split = true;
-			if (match.teams >= 1 && match.scores.Count >= 2)
+			if (!Rounds && match.scores.Count < 2)
+			{
+				split = false;
+				if (!end)
+				{
+					Player.Note("only one player is in the match, back to the lobby");
+				}
+			}
+			else if (match.teams >= 1)
 			{
 				split = match.scores.Exists((Score s) => s.team != match.scores[0].team);
 				if (!split && !end)
@@ -2830,7 +2912,9 @@ namespace Ragdoll
 			{
 				return true;
 			}
-			return Array.IndexOf(allowed.Split(';'), scene) >= 0;
+			bool except = allowed[0] == '!';
+			string list = except ? allowed.Substring(1) : allowed;
+			return except ^ (Array.IndexOf(list.Split(';'), scene) >= 0);
 		}
 
 		private string Title(string scene)

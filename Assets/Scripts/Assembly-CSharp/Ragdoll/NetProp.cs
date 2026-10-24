@@ -44,6 +44,8 @@ namespace Ragdoll
 
 		private Collider[] colliders;
 
+		private Grabbable grab;
+
 		private Collider[] holderColliders;
 
 		private AvatarBody holderCopy;
@@ -362,6 +364,7 @@ namespace Ragdoll
 			{
 				rb.isKinematic = !Broken;
 			}
+			grab = GetComponent<Grabbable>();
 			colliders = GetComponentsInChildren<Collider>();
 			networkTransform = GetComponent<NetworkTransform>();
 			if ((bool)networkTransform)
@@ -758,6 +761,19 @@ namespace Ragdoll
 			Turn = Quaternion.Inverse(grip.rotation) * rb.rotation;
 		}
 
+		private void Loosen()
+		{
+			if (!grab || !grab.holdsYou)
+			{
+				return;
+			}
+			grab.holdsYou = false;
+			if (Player.main)
+			{
+				Player.main.GaveWay(rb);
+			}
+		}
+
 		private void FixedUpdate()
 		{
 			if (!Object || !Object.IsValid)
@@ -772,6 +788,10 @@ namespace Ragdoll
 					Unwedge();
 					rb.WakeUp();
 				}
+			}
+			if (pinned && Broken)
+			{
+				Loosen();
 			}
 			if (pinned && (bool)networkTransform && networkTransform.enabled == Bolted)
 			{
@@ -1409,13 +1429,14 @@ namespace Ragdoll
 				}
 				bodyColliders = manager.localBody.GetComponentsInChildren<Collider>();
 			}
-			if (!ghosting && !HasStateAuthority && !heldHere && Inside(bodyColliders, ghostFrom))
+			bool fast = !HasStateAuthority && !heldHere && !KeepingLocal && netSpeed > (ghosting ? ghostOff : ghostOn);
+			if (!ghosting && !HasStateAuthority && !heldHere && (fast || Inside(bodyColliders, ghostFrom)))
 			{
 				Ignore(bodyColliders, on: true);
 				ghosting = true;
-				Player.Note(name + " is " + (ghostFrom * 100f).ToString("F0") + "+ cm inside me but owned by player " + Object.StateAuthority.PlayerId + ", passing through until clear");
+				Player.Note(name + (fast ? " flies at " + netSpeed.ToString("F1") + " m/s" : " is " + (ghostFrom * 100f).ToString("F0") + "+ cm inside me") + " but is owned by player " + Object.StateAuthority.PlayerId + ", passing through me until " + (fast ? "it slows down" : "clear"));
 			}
-			else if (ghosting && !heldHere && !Inside(bodyColliders, 0.01f))
+			else if (ghosting && !heldHere && !fast && !Inside(bodyColliders, 0.01f))
 			{
 				Ignore(bodyColliders, on: false);
 				ghosting = false;

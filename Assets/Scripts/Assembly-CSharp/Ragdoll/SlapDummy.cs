@@ -489,6 +489,8 @@ namespace Ragdoll
 
 		private static SlapDummy hauler;
 
+		private static SlapDummy helper;
+
 		private static float scanKey = -1f;
 
 		private static Rigidbody scanFloor;
@@ -520,6 +522,38 @@ namespace Ragdoll
 		private bool spentR;
 
 		private bool slamSpent;
+
+		private bool scaling;
+
+		private bool scaleOver;
+
+		private Vector3 scaleTop;
+
+		private Vector3 scaleWay;
+
+		private float scaleFaceY;
+
+		private float scaleBest;
+
+		private float scaleBestAt;
+
+		private float scaleRig;
+
+		private const float ClimbTop = 4.5f;
+
+		private const float ClimbFace = 1.2f;
+
+		private const float ClimbUp = 2.6f;
+
+		private const float ClimbHug = 0.6f;
+
+		private const float ClimbStall = 0.8f;
+
+		private const float OverSpeed = 2.2f;
+
+		private const float ClearSpace = 0.5f;
+
+		private static readonly Collider[] roomHits = new Collider[12];
 
 		private float pounceAt;
 
@@ -599,8 +633,6 @@ namespace Ragdoll
 
 		private const float TossOver = 0.3f;
 
-		private const float TossFar = 4f;
-
 		private const float TossAir = 1.2f;
 
 		private const float HaulDeep = 1.1f;
@@ -616,6 +648,14 @@ namespace Ragdoll
 		private const float LipClear = 0.4f;
 
 		private const float HaulAssist = 15f;
+
+		private const float SmallSolo = 0.25f;
+
+		private const float SmallTeam = 0.65f;
+
+		private const float BigKoSpeed = 8.5f;
+
+		private const float BigKoLift = 3f;
 
 		private float haulLean;
 
@@ -651,6 +691,8 @@ namespace Ragdoll
 		public bool PunchRight => punchRight;
 
 		public bool Pouncing => pouncing;
+
+		public bool Scaling => scaling;
 
 		public bool Clinging => clingJoint != null;
 
@@ -762,7 +804,7 @@ namespace Ragdoll
 				return false;
 			}
 			Player p = rb.GetComponentInParent<Player>();
-			if (!p || p == body || p.dummy || p.knockedOut)
+			if (!p || p == body || p.dummy || p.Ragdolled())
 			{
 				return false;
 			}
@@ -1114,7 +1156,7 @@ namespace Ragdoll
 
 		public static bool Hazard(Vector3 p)
 		{
-			if (Train.Escape(p).sqrMagnitude > 0f)
+			if (Train.Escape(p).sqrMagnitude > 0f || global::Ragdoll.Hazard.OutOfRing(p))
 			{
 				return true;
 			}
@@ -1174,19 +1216,19 @@ namespace Ragdoll
 			switch (k)
 			{
 				case Kind.Small:
-					power = 0.6f;
+					power = 0.9f;
 					push = 0.3f;
 					break;
 				case Kind.Normal:
-					power = 1.1f;
+					power = 1.6f;
 					push = 1f;
 					break;
 				case Kind.Big:
-					power = 1.7f;
+					power = 2.3f;
 					push = 1.5f;
 					break;
 				case Kind.Fat:
-					power = 0.7f;
+					power = 1.1f;
 					push = 0.8f;
 					break;
 				default:
@@ -1202,9 +1244,33 @@ namespace Ragdoll
 			{
 				return Hit.None;
 			}
-			Strength(k, out float power, out float push);
+			float power;
+			float push;
+			switch (k)
+			{
+				case Kind.Small:
+					power = 0.9f;
+					push = 0.3f;
+					break;
+				case Kind.Normal:
+					power = 1.6f;
+					push = 1f;
+					break;
+				case Kind.Big:
+					power = 2.3f;
+					push = 1.5f;
+					break;
+				case Kind.Fat:
+					power = 1.1f;
+					push = 0.8f;
+					break;
+				default:
+					power = 1f;
+					push = 1f;
+					break;
+			}
 			Rigidbody part = (victim.IsArm(bone) && !victim.guarding && victim.chest) ? victim.chest : bone;
-			Hit hit = victim.TakeHit(part, power * SlapImpulse, SlapSpeed, point, -1, Time.time, by, false, true, true);
+			Hit hit = victim.TakeHit(part, power * SlapImpulse, SlapSpeed, point, -1, Time.time, by, false, true, true, true);
 			if (hit == Hit.Hurt || hit == Hit.KnockedOut)
 			{
 				part.AddForceAtPosition(dir * (push * SlapImpulse), point, ForceMode.Impulse);
@@ -1213,9 +1279,16 @@ namespace Ragdoll
 					victim.Shove(dir * (push * 40.5f));
 				}
 				Player.HitAt(point, true);
-				if (k == Kind.Big && hit == Hit.Hurt)
+				if (k == Kind.Big)
 				{
-					victim.Launch(dir, 45f);
+					if (hit == Hit.Hurt)
+					{
+						victim.Launch(dir, 45f);
+					}
+					else
+					{
+						victim.Launch(dir, 60f, BigKoSpeed, BigKoLift);
+					}
 				}
 				return hit;
 			}
@@ -1798,6 +1871,10 @@ namespace Ragdoll
 			{
 				return;
 			}
+			if (scaling && Scale())
+			{
+				return;
+			}
 			if (pouncing && Pounce())
 			{
 				return;
@@ -1881,16 +1958,18 @@ namespace Ragdoll
 			}
 			bool down = target.flopped || target.rising || (npc && target.knockedOut);
 			bool claimed = false;
+			bool helping = false;
 			bool othersHaul = false;
 			if (npc && down)
 			{
 				claimed = Claim();
-				if (npc && down && !claimed && hauler && hauler != this && hauler.target == target)
+				helping = npc && down && !claimed && Help();
+				if (npc && down && !claimed && !helping && hauler && hauler != this && hauler.target == target)
 				{
 					othersHaul = !hauler.gone;
 				}
 			}
-			float range = down ? (claimed ? HaulNear : (othersHaul ? HaulRing : downReach)) : (Time.time < backUntil ? stepBack : reach);
+			float range = down ? ((claimed || helping) ? HaulNear : (othersHaul ? HaulRing : downReach)) : (Time.time < backUntil ? stepBack : reach);
 			rig.speed = Mathf.Min(walkSpeed, Mathf.Abs(dist - range) / Mathf.Max(Time.deltaTime, Time.fixedDeltaTime));
 			float lead = Flat(body.pelvis.position - rig.playSpace.position).magnitude;
 			if (gap < range - standBand || dist < range - standBand)
@@ -1932,7 +2011,7 @@ namespace Ragdoll
 				rig.aiHandR = false;
 				return;
 			}
-			if (npc && !claimed && Stuck(range))
+			if (npc && !claimed && !helping && Stuck(range))
 			{
 				return;
 			}
@@ -1948,7 +2027,7 @@ namespace Ragdoll
 			}
 			if (npc && down)
 			{
-				if (claimed)
+				if (claimed || helping)
 				{
 					Fetch();
 				}
@@ -2154,6 +2233,11 @@ namespace Ragdoll
 				return false;
 			}
 			stuckFrom = -1f;
+			if (WallTop(out scaleTop, out scaleWay))
+			{
+				StartScale();
+				return true;
+			}
 			bool leapable = Leapable();
 			leapSpot = !leapable;
 			if (!leapable && !GapLanding(out leapAt))
@@ -2315,8 +2399,217 @@ namespace Ragdoll
 				return Arc(leapAt - leapBase, LeapApex, Flat(forward).normalized, GapFar);
 			}
 			Vector3 goal = target.pelvis.position + target.pelvis.linearVelocity * 0.3f - body.pelvis.position;
+			float over = Mathf.Max(Clearance(Feet(), target.pelvis.position) + 0.5f - Mathf.Max(goal.y, 0f), LeapApex);
 			Vector3 forward2 = body.chest.transform.forward;
-			return Arc(goal, LeapApex, Flat(forward2).normalized, LeapFar);
+			return Arc(goal, over, Flat(forward2).normalized, LeapFar);
+		}
+
+		private float Clearance(Vector3 from, Vector3 to)
+		{
+			Vector3 flat = new Vector3(to.x - from.x, 0f, to.z - from.z);
+			float dist = flat.magnitude;
+			if (dist < GapStep)
+			{
+				return 0f;
+			}
+			float end = dist - GapStep;
+			float top = Mathf.Max(from.y, to.y) + LeapTop + 1f;
+			float best = 0f;
+			Vector3 dir = flat / dist;
+			for (float d = GapStep; d < end; d += GapStep)
+			{
+				if (GapGround(new Vector3(from.x + dir.x * d, top, from.z + dir.z * d), top - from.y + 0.5f, out RaycastHit hit))
+				{
+					best = Mathf.Max(best, hit.point.y - from.y);
+				}
+			}
+			return Mathf.Min(best, LeapTop);
+		}
+
+		private bool Facing(Vector3 pelvis)
+		{
+			float y = Mathf.Max(scaleFaceY, Mathf.Min(pelvis.y, scaleTop.y - 0.2f));
+			int count = Physics.RaycastNonAlloc(new Vector3(pelvis.x, y, pelvis.z), scaleWay, gapHits, ClimbFace, ~4, QueryTriggerInteraction.Ignore);
+			for (int i = 0; i < count; i++)
+			{
+				Collider c = gapHits[i].collider;
+				if (c && !Other(c))
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
+		private static bool Other(Collider c)
+		{
+			if (!c.GetComponentInParent<Player>() && !c.GetComponentInParent<NetworkPlayer>() && !c.GetComponentInParent<NetworkNpc>())
+			{
+				return c.GetComponentInParent<Rope>();
+			}
+			return true;
+		}
+
+		private bool WallTop(out Vector3 top, out Vector3 way)
+		{
+			top = Vector3.zero;
+			way = Flat(targetBody.pelvis.position - body.pelvis.position);
+			if (way.sqrMagnitude < 0.01f)
+			{
+				return false;
+			}
+			way = way.normalized;
+			Vector3 feet = Feet();
+			if (!Physics.Raycast(feet + Vector3.up * 0.6f, way, out RaycastHit wall, ClimbFace, ~4, QueryTriggerInteraction.Ignore) || Mathf.Abs(wall.normal.y) > 0.4f || Other(wall.collider))
+			{
+				return false;
+			}
+			if (wall.rigidbody && !wall.rigidbody.isKinematic && wall.rigidbody.mass < 40f)
+			{
+				return false;
+			}
+			if (!GapGround(new Vector3(wall.point.x + way.x * 0.35f, feet.y + ClimbTop + 0.6f, wall.point.z + way.z * 0.35f), ClimbTop + 0.6f, out RaycastHit ledge))
+			{
+				return false;
+			}
+			float rise = ledge.point.y - feet.y;
+			if (rise < 0.7f || rise > ClimbTop)
+			{
+				return false;
+			}
+			if (ledge.normal.y < 0.6f || Hazard(ledge.point) || TrainWreck.Desert(ledge.rigidbody))
+			{
+				return false;
+			}
+			if (ledge.rigidbody && !ledge.rigidbody.isKinematic && ledge.rigidbody.mass < 40f)
+			{
+				return false;
+			}
+			if (Physics.Raycast(wall.point + way * -0.3f + Vector3.up * 0.2f, Vector3.up, out RaycastHit roof, rise + ClimbFace, ~4, QueryTriggerInteraction.Ignore) && !Other(roof.collider))
+			{
+				return false;
+			}
+			int count = Physics.OverlapCapsuleNonAlloc(ledge.point + Vector3.up * 0.45f, ledge.point + Vector3.up * 1.5f, 0.25f, roomHits, ~4, QueryTriggerInteraction.Ignore);
+			for (int i = 0; i < count; i++)
+			{
+				if (roomHits[i] && !Other(roomHits[i]))
+				{
+					return false;
+				}
+			}
+			top = ledge.point;
+			scaleFaceY = wall.point.y;
+			return true;
+		}
+
+		private void StartScale()
+		{
+			scaling = true;
+			scaleOver = false;
+			scaleBest = body.pelvis.position.y;
+			scaleBestAt = Time.time;
+			scaleRig = rig.playSpace.position.y - body.pelvis.position.y;
+			rig.testWish = Vector3.zero;
+			if (Application.isEditor && hitLog.Length < 40000)
+			{
+				hitLog.Append("      t ").Append(Time.time.ToString("F2")).Append(" CLIMB ").Append((scaleTop.y - Feet().y).ToString("F2")).Append(" m up at ")
+					.Append(scaleTop.ToString("F1"))
+					.Append('\n');
+			}
+		}
+
+		private void EndScale()
+		{
+			scaling = false;
+			scaleOver = false;
+			rig.testWish = Vector3.zero;
+		}
+
+		private float FootY()
+		{
+			float y = body.pelvis.position.y;
+			Rigidbody[] legs = new Rigidbody[2] { body.leftLowerLeg, body.rightLowerLeg };
+			foreach (Rigidbody leg in legs)
+			{
+				if (!leg)
+				{
+					continue;
+				}
+				leg.GetComponents(partCols);
+				foreach (Collider c in partCols)
+				{
+					if (c && !c.isTrigger)
+					{
+						y = Mathf.Min(y, c.bounds.min.y);
+					}
+				}
+			}
+			return y;
+		}
+
+		private bool Scale()
+		{
+			if (!target || fighter.knockedOut || self.flopped || Wet())
+			{
+				EndScale();
+				return false;
+			}
+			Vector3 pelvis = body.pelvis.position;
+			if (pelvis.y > scaleBest + 0.05f)
+			{
+				scaleBest = pelvis.y;
+				scaleBestAt = Time.time;
+			}
+			else if (Time.time > scaleBestAt + ClimbStall)
+			{
+				EndScale();
+				return false;
+			}
+			rig.aiYaw = Quaternion.LookRotation(scaleWay, Vector3.up).eulerAngles.y;
+			float foot = FootY();
+			if (!scaleOver && foot >= scaleTop.y + 0.1f)
+			{
+				scaleOver = true;
+			}
+			if (scaleOver)
+			{
+				if (Vector3.Dot(Flat(pelvis - scaleTop), scaleWay) > 0.3f)
+				{
+					EndScale();
+					return false;
+				}
+			}
+			else if (!Facing(pelvis))
+			{
+				EndScale();
+				return false;
+			}
+			Vector3 want;
+			if (scaleOver)
+			{
+				float lift = (foot < scaleTop.y + 0.3f) ? 0.4f : Mathf.Min(body.pelvis.linearVelocity.y, 0f);
+				want = scaleWay * OverSpeed + Vector3.up * lift;
+			}
+			else
+			{
+				want = Vector3.up * ClimbUp + scaleWay * ClimbHug;
+			}
+			Vector3 change = want - body.pelvis.linearVelocity;
+			Rigidbody[] bodies = body.bodies;
+			foreach (Rigidbody rb in bodies)
+			{
+				if (rb && !rb.isKinematic)
+				{
+					rb.AddForce(change, ForceMode.VelocityChange);
+				}
+			}
+			Vector3 rigAt = rig.playSpace.position;
+			rig.playSpace.position = new Vector3(rigAt.x, pelvis.y + scaleRig, rigAt.z);
+			float phase = Mathf.Repeat(Time.time * 3f, 1f);
+			Vector3 grip = body.chest.position + Vector3.up * armLen * 0.9f + scaleWay * 0.25f;
+			Pull(body.rightHand, grip + ((phase < 0.5f) ? (Vector3.up * 0.25f) : Vector3.zero), WindPull);
+			Pull(body.leftHand, grip + ((phase < 0.5f) ? Vector3.zero : (Vector3.up * 0.25f)), WindPull);
+			return true;
 		}
 
 		private bool TryPounce(float spaceDist, Vector3 face)
@@ -2549,7 +2842,7 @@ namespace Ragdoll
 
 		private bool Claim()
 		{
-			bool near = quitKey != target.knockedOutUntil && spentKey != target.knockedOutUntil && Time.time > tossAt + TossAir && Flat(body.pelvis.position - target.pelvis.position).magnitude < FetchMax;
+			bool near = target.knockedOut && !target.carriedHold && !target.trainHeld && !TrainWreck.Dragged(target) && quitKey != target.knockedOutUntil && spentKey != target.knockedOutUntil && Time.time > tossAt + TossAir && Flat(body.pelvis.position - target.pelvis.position).magnitude < FetchMax;
 			bool taken;
 			if (hauler && hauler != this && !hauler.gone && hauler.isActiveAndEnabled)
 			{
@@ -2559,7 +2852,7 @@ namespace Ragdoll
 			{
 				taken = !near;
 			}
-			if (taken)
+			if (taken || !Pick())
 			{
 				if (hauler == this && !haul)
 				{
@@ -2577,6 +2870,53 @@ namespace Ragdoll
 			hauler = this;
 			claimKey = target.knockedOutUntil;
 			return true;
+		}
+
+		private bool Help()
+		{
+			bool near = hauler && hauler != this && !hauler.gone && hauler.isActiveAndEnabled && hauler.kind == Kind.Small && hauler.target == target && hauler.claimKey == target.knockedOutUntil && hauler.haulWay >= 0 && target.knockedOut && quitKey != target.knockedOutUntil && Flat(body.pelvis.position - target.pelvis.position).magnitude < FetchMax;
+			bool taken;
+			if (helper && helper != this && !helper.gone && helper.isActiveAndEnabled)
+			{
+				taken = !near || helper.claimKey == target.knockedOutUntil;
+			}
+			else
+			{
+				taken = !near;
+			}
+			if (taken)
+			{
+				if (helper == this && !haul)
+				{
+					helper = null;
+				}
+				return false;
+			}
+			if (helper != this || claimKey != target.knockedOutUntil)
+			{
+				haulLean = 0f;
+				claimAt = Time.time;
+				handKnownL = false;
+				handKnownR = false;
+			}
+			helper = this;
+			claimKey = target.knockedOutUntil;
+			haulWay = hauler.haulWay;
+			haulNow = hauler.haulNow;
+			return true;
+		}
+
+		private float Strain()
+		{
+			if (kind != Kind.Small)
+			{
+				return 1f;
+			}
+			if (helper && helper != this && !helper.gone && helper.haul && helper.target == target)
+			{
+				return SmallTeam;
+			}
+			return SmallSolo;
 		}
 
 		private bool Pick()
@@ -2646,7 +2986,17 @@ namespace Ragdoll
 			if (Time.time > claimAt + FetchMax)
 			{
 				quitKey = target.knockedOutUntil;
-				spentKey = target.knockedOutUntil;
+				if (helper == this)
+				{
+					helper = null;
+					return;
+				}
+				spentKey = quitKey;
+				if (haulWay >= 0 && Flat(target.pelvis.position - body.pelvis.position).magnitude < armLen + 0.5f)
+				{
+					Toss();
+					return;
+				}
 				if (hauler == this)
 				{
 					hauler = null;
@@ -2694,7 +3044,7 @@ namespace Ragdoll
 			haul.xMotion = ConfigurableJointMotion.Free;
 			haul.yMotion = ConfigurableJointMotion.Free;
 			haul.zMotion = ConfigurableJointMotion.Free;
-			float max = (kind == Kind.Normal) ? 900f : 1500f;
+			float max = (kind == Kind.Small) ? 600f : ((kind == Kind.Normal) ? 900f : 1500f);
 			JointDrive drive = default(JointDrive);
 			drive.positionSpring = HaulSpring;
 			drive.positionDamper = HaulDamp;
@@ -2719,7 +3069,7 @@ namespace Ragdoll
 					.Append(haulNow ? " (toss now)" : "")
 					.Append('\n');
 			}
-			Player.Note("a " + kind.ToString() + " grabbed my knocked out body to throw it " + (haulNow ? "off the edge right here" : (brinkAt[haulWay].ToString("F1") + " m away")));
+			Player.Note("a " + kind.ToString() + ((helper == this) ? " grabbed my knocked out body to help drag it" : (" grabbed my knocked out body to throw it " + (haulNow ? "off the edge right here" : (brinkAt[haulWay].ToString("F1") + " m away")))));
 		}
 
 		private float Stretch()
@@ -2733,12 +3083,21 @@ namespace Ragdoll
 
 		private bool Haul()
 		{
+			if (helper == this)
+			{
+				return Assist();
+			}
 			bool calm = AvatarBody.peaceful || AvatarBody.truce || GameManager.Waiting;
-			bool lost = gone || fighter.knockedOut || self.flopped || !Valid(target) || !target.knockedOut || target.carriedHold || target.trainHeld || TrainWreck.Dragged(target) || target.recovers + target.rescues != haulMoves || (scanOnBody && !scanFloor) || haulWay < 0 || Stretch() > HaulStretch;
+			bool lost = gone || fighter.knockedOut || self.flopped || !Valid(target) || !target.knockedOut || target.carriedHold || target.trainHeld || TrainWreck.Dragged(target) || target.recovers + target.rescues != haulMoves || (scanOnBody && !scanFloor) || haulWay < 0;
 			if (lost || calm)
 			{
 				Drop("let go");
 				return false;
+			}
+			if (Stretch() > HaulStretch)
+			{
+				Toss();
+				return true;
 			}
 			fighter.limpWhenIdle = true;
 			rig.testLean = Vector3.down * haulLean;
@@ -2747,7 +3106,7 @@ namespace Ragdoll
 			{
 				rig.aiYaw = Quaternion.LookRotation(face, Vector3.up).eulerAngles.y;
 			}
-			rig.speed = walkSpeed * HaulPace;
+			rig.speed = walkSpeed * HaulPace * Strain();
 			Vector3 stand = Placed(standAt[haulWay]);
 			Vector3 go = Flat(stand - body.pelvis.position);
 			float dist = go.magnitude;
@@ -2795,13 +3154,59 @@ namespace Ragdoll
 			return true;
 		}
 
+		private bool Assist()
+		{
+			bool calm = AvatarBody.peaceful || AvatarBody.truce || GameManager.Waiting;
+			bool lost = !hauler || hauler == this || hauler.gone || !hauler.isActiveAndEnabled || hauler.target != target || hauler.claimKey != claimKey || (!hauler.haul && !(Time.time < hauler.claimAt + FetchMax)) || gone || fighter.knockedOut || self.flopped || !Valid(target) || !target.knockedOut || Stretch() > HaulStretch;
+			if (lost || calm)
+			{
+				Drop("helper let go");
+				return false;
+			}
+			fighter.limpWhenIdle = true;
+			rig.testLean = Vector3.down * haulLean;
+			Vector3 face = Flat(target.chest.position - body.chest.position);
+			if (face.sqrMagnitude > 0.0001f)
+			{
+				rig.aiYaw = Quaternion.LookRotation(face, Vector3.up).eulerAngles.y;
+			}
+			bool still = !hauler.haul || !(hauler.rig.testWish.sqrMagnitude > 0f);
+			Vector3 stand = Placed(standAt[hauler.haulWay]);
+			Vector3 from = hauler.body.pelvis.position;
+			rig.speed = hauler.rig.speed;
+			Vector3 go = Flat(stand - from);
+			if (!still && go.sqrMagnitude > 0.0001f)
+			{
+				rig.testWish = Flat(rig.playSpace.InverseTransformDirection(go)).normalized;
+			}
+			else
+			{
+				rig.testWish = Vector3.zero;
+			}
+			if (!still)
+			{
+				Steer();
+			}
+			if (kind != Kind.Fat)
+			{
+				Lift(body.leftHand);
+				Lift(body.leftForearm);
+				Lift(body.leftUpperArm);
+			}
+			return true;
+		}
+
 		private void Toss()
 		{
 			Vector3 land = Placed(landAt[haulWay]);
 			Vector3 stand = Placed(standAt[haulWay]);
 			Vector3 way = Flat(land - stand);
 			Vector3 dir = (way.sqrMagnitude > 0.0001f) ? way.normalized : Flat(target.pelvis.position - body.pelvis.position).normalized;
-			if (Flat(land - target.pelvis.position).magnitude > TossFar || !GameManager.Deadly(land, dir, out float surface))
+			if (helper && helper != this && helper.haul)
+			{
+				helper.Drop("toss");
+			}
+			if (!GameManager.Deadly(land, dir, out float surface))
 			{
 				Drop("no toss");
 				return;
@@ -2856,7 +3261,10 @@ namespace Ragdoll
 				haul.zDrive = default(JointDrive);
 				UnityEngine.Object.Destroy(haul);
 				quitKey = target ? target.knockedOutUntil : -1f;
-				spentKey = quitKey;
+				if (helper != this)
+				{
+					spentKey = quitKey;
+				}
 				if (Application.isEditor && hitLog.Length < 40000)
 				{
 					hitLog.Append("      t ").Append(Time.time.ToString("F2")).Append(" HAUL drop ").Append(why).Append('\n');
@@ -2867,6 +3275,10 @@ namespace Ragdoll
 			if (hauler == this)
 			{
 				hauler = null;
+			}
+			if (helper == this)
+			{
+				helper = null;
 			}
 			stuckFrom = -1f;
 			handKnownL = false;

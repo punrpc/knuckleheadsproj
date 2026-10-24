@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: CategorySubLabel
   m_EditorClassIdentifier:
   textAlignement: 3
-  font: {fileID: 12800000, guid: a53100c9baee084458cc1c0abdd5045b, type: 3}
+  font: {fileID: 12800000, guid: ec2b3a3019d86174cae268a684d8cf26, type: 3}
   fontSize: 11
   fontStyle: 0
   color: {r: 0.6666667, g: 0.6666667, b: 0.6666667, a: 1}

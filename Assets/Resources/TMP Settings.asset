@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2705215ac5b84b70bacc50632be6e391, type: 3}
   m_Name: TMP Settings
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier:
   assetVersion: 2
   m_TextWrappingMode: 1
   m_enableKerning: 1
@@ -24,7 +24,7 @@ MonoBehaviour:
   m_missingGlyphCharacter: 0
   m_ClearDynamicDataOnBuild: 1
   m_warningsDisabled: 0
-  m_defaultFontAsset: {fileID: 11400000, guid: 432048a663dc71447b3eaa7bae1903ed, type: 2}
+  m_defaultFontAsset: {fileID: 11400000, guid: 716980b89e0d35944a90e46d17d19210, type: 2}
   m_defaultFontAssetPath: Fonts & Materials/
   m_defaultFontSize: 36
   m_defaultAutoSizeMinRatio: 0.5
@@ -36,14 +36,14 @@ MonoBehaviour:
   m_fallbackFontAssets: []
   m_matchMaterialPreset: 1
   m_HideSubTextObjects: 0
-  m_defaultSpriteAsset: {fileID: 11400000, guid: 558de50ec1cf11a49a423b9260e80b3d, type: 2}
+  m_defaultSpriteAsset: {fileID: 11400000, guid: 7e15d7a68b1bc574685e32f37340513d, type: 2}
   m_defaultSpriteAssetPath: Sprite Assets/
   m_enableEmojiSupport: 1
   m_MissingCharacterSpriteUnicode: 0
   m_EmojiFallbackTextAssets: []
   m_defaultColorGradientPresetsPath: Color Gradient Presets/
-  m_defaultStyleSheet: {fileID: 11400000, guid: 93d8f877b4188a34584f9a3b152aeaea, type: 2}
-  m_StyleSheetsResourcePath: 
-  m_leadingCharacters: {fileID: 4900000, guid: dc2334f3a1a8c1a4f95a2c5e4254a9a3, type: 3}
-  m_followingCharacters: {fileID: 4900000, guid: baa8fa9ce9b86134cbcc643a4bbb1219, type: 3}
+  m_defaultStyleSheet: {fileID: 11400000, guid: 0c517f9e8ca27734c866aac39eefb2a1, type: 2}
+  m_StyleSheetsResourcePath:
+  m_leadingCharacters: {fileID: 4900000, guid: be82dbbd5651e8e438a7feebcdbe39bc, type: 3}
+  m_followingCharacters: {fileID: 4900000, guid: f6bbdba1fcf118345a1afbf623351ed8, type: 3}
   m_UseModernHangulLineBreakingRules: 0

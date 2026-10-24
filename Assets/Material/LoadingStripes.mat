@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: LoadingStripes
-  m_Shader: {fileID: 4800000, guid: 7fd2342e2e6cf644399d0e656494f9de, type: 3}
+  m_Shader: {fileID: 4800000, guid: 5366ab208e7ae72499b712e6caeea144, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []

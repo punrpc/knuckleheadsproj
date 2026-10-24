@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: ConsoleLogCounter
   m_EditorClassIdentifier:
   textAlignement: 5
-  font: {fileID: 12800000, guid: a53100c9baee084458cc1c0abdd5045b, type: 3}
+  font: {fileID: 12800000, guid: ec2b3a3019d86174cae268a684d8cf26, type: 3}
   fontSize: 10
   fontStyle: 0
   color: {r: 0.7058824, g: 0.75686276, b: 0.8392157, a: 1}

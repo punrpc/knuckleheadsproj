@@ -1394,6 +1394,8 @@ namespace Ragdoll
 			int car = CarAt(p);
 			Cache(me);
 			Drag(me, p, car);
+			p = me.pelvis.position;
+			car = CarAt(p);
 			Pass(underPass && dragged);
 			bool onCar = OnCar(p, car);
 			Catch(me, onCar);
@@ -1403,8 +1405,10 @@ namespace Ragdoll
 				if (car >= 0 && Behind(car) > leftBehind)
 				{
 					me.Kill("left behind on a loose car");
+					return;
 				}
-				else if (smacked && !me.knockedOut && Moving(floorBody))
+				if (smacked
+ && !me.knockedOut && Moving(floorBody))
 				{
 					Smack(me);
 				}
@@ -1586,6 +1590,15 @@ namespace Ragdoll
 			return main.desert.Contains(rb);
 		}
 
+		public static bool Car(Collider c)
+		{
+			if (!main || !c)
+			{
+				return false;
+			}
+			return main.carCols.Contains(c);
+		}
+
 		private void Npcs()
 		{
 			for (int i = SlapDummy.alive.Count - 1; i >= 0; i--)
@@ -1600,11 +1613,16 @@ namespace Ragdoll
 				int car = CarAt(p);
 				if (!OnCar(p, car))
 				{
-					if (trainBack - Vector3.Dot(p - tileHome, ahead) >= DieBehind)
+					if (Moving(floorBody) && (desert.Contains(npc.Standing) || Touches(npc.pelvis.GetComponent<Collider>())))
+					{
+						npc.Kill("fell off the train");
+					}
+					else if (trainBack - Vector3.Dot(p - tileHome, ahead) >= DieBehind)
 					{
 						npc.Kill("left behind");
 					}
 				}
+
 				else if (Behind(car) > leftBehind)
 				{
 					npc.Kill("left behind on a loose car");
@@ -1612,7 +1630,23 @@ namespace Ragdoll
 			}
 		}
 
+		public static bool Loose(Rigidbody rb)
+		{
+			TrainWreck wreck = main;
+			if (!wreck || !rb || wreck.carBodies == null || wreck.looseAt == null)
+			{
+				return false;
+			}
+			int i = System.Array.IndexOf(wreck.carBodies, rb);
+			if (i < 0 || i >= wreck.looseAt.Length)
+			{
+				return false;
+			}
+			return wreck.looseAt[i] >= 0f;
+		}
+
 		public static bool Moving(Rigidbody rb)
+
 		{
 			TrainWreck wreck = main;
 			if (!wreck || !rb || !wreck.desert.Contains(rb))

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: StopIcon
   m_EditorClassIdentifier:
   enabled: 1
-  icon: {fileID: 2800000, guid: 15f028c7f944e49419efbce752f1db78, type: 3}
+  icon: {fileID: 2800000, guid: d4350cd16228d1642ba0c5314b4de3e9, type: 3}
   sprite: {fileID: 0}
   color: {r: 0.745283, g: 0.25663045, b: 0.30718055, a: 1}
   colorHover: {r: 0.8396226, g: 0.38416696, b: 0.43253732, a: 1}

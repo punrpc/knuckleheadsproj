@@ -536,7 +536,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3cd5b8381d8d483ba0eb61f2d7e51058, type: 3}
   m_Name:
   m_EditorClassIdentifier:
-  _multipleOptionsPrefab: {fileID: 114256069497284392, guid: 8290139cb3e4dcf47bbb8948708dd7b2, type: 2}
+  _multipleOptionsPrefab: {fileID: 114256069497284392, guid: 70243216572ea4e44b96c8be8d5f5646, type: 2}
   _peerText: {fileID: 114801075752484240}
   _collapseButton: {fileID: 114089843903986396}
   _multiPeerButton: {fileID: 114875609422105747}
@@ -777,7 +777,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 26d462beaf7c95b4f849c1eedfa78b78, type: 2}
+  m_Sprite: {fileID: 21300000, guid: 0449e154feeeef54588b7fa10a92eadf, type: 2}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -950,7 +950,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: b5219e4e94c23024890b8bdbd3c2c86b, type: 2}
+  m_Sprite: {fileID: 21300000, guid: 7ff81cb1d5c2f6d47a9630dd373dc500, type: 2}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -1124,7 +1124,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: b5219e4e94c23024890b8bdbd3c2c86b, type: 2}
+  m_Sprite: {fileID: 21300000, guid: 7ff81cb1d5c2f6d47a9630dd373dc500, type: 2}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -1182,7 +1182,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: b5219e4e94c23024890b8bdbd3c2c86b, type: 2}
+  m_Sprite: {fileID: 21300000, guid: 7ff81cb1d5c2f6d47a9630dd373dc500, type: 2}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -1284,7 +1284,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: bb86cbdf9a4cc024aa621e3ab32f3d66, type: 3}
+    m_Font: {fileID: 12800000, guid: a846928e2ef13cf46b5682f8cb085647, type: 3}
     m_FontSize: 18
     m_FontStyle: 0
     m_BestFit: 0
@@ -1460,7 +1460,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: bb86cbdf9a4cc024aa621e3ab32f3d66, type: 3}
+    m_Font: {fileID: 12800000, guid: a846928e2ef13cf46b5682f8cb085647, type: 3}
     m_FontSize: 14
     m_FontStyle: 0
     m_BestFit: 1
@@ -1950,7 +1950,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: bb86cbdf9a4cc024aa621e3ab32f3d66, type: 3}
+    m_Font: {fileID: 12800000, guid: a846928e2ef13cf46b5682f8cb085647, type: 3}
     m_FontSize: 14
     m_FontStyle: 0
     m_BestFit: 1

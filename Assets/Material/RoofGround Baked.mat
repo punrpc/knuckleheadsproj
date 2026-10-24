@@ -1,0 +1,63 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: RoofGround Baked
+  m_Shader: {fileID: 4800000, guid: 6dcc200e9087a064cb11ab039c4b7310, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords:
+  - _WORLDSPACE_ON
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties:
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+      _CheckerMap:
+        m_Texture: {fileID: 2800000, guid: 9d542956000b8b841b2a8181ade380e4, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+      _SideMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: {}
+    m_Floats:
+      _Ambient: 1
+      _Bottom: -20
+      _CamClip: 0
+      _CheckerSize: 4
+      _DstBlend: 0
+      _ExtraLights: 0
+      _FadeEnd: 20
+      _FadeStart: 12
+      _FadeTop: 0
+      _KeepColor: 0
+      _MeshGradient: 0
+      _PixelLights: 0
+      _SrcBlend: 1
+      _StaticAO: 1
+      _Top: 12
+      _TopFrom: 0.6
+      _TopSoft: 0.05
+      _WorldSpace: 1
+      _Wrap: 0.5
+      _ZWrite: 1
+    m_Colors:
+      _BottomColor: {r: 0.20152128, g: 0.20152128, b: 0.20152128, a: 1}
+      _Direction: {r: 0, g: 1, b: 0, a: 0}
+      _SideColor: {r: 0.4894088, g: 0.4894088, b: 0.4894088, a: 1}
+      _TopColor: {r: 0.575775, g: 0.575775, b: 0.575775, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 0

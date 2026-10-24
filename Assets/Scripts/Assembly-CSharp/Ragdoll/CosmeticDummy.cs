@@ -21,6 +21,66 @@ namespace Ragdoll
 			public Collider zone;
 		}
 
+		[Serializable]
+		public class Bundle
+		{
+			public string name;
+
+			public string head;
+
+			public string torso;
+
+			public string legs;
+
+			public string face;
+
+			public string Item(int slot)
+			{
+				switch (slot)
+				{
+					case 0:
+						return head;
+					case 1:
+						return torso;
+					case 2:
+						return legs;
+					default:
+						return face;
+				}
+			}
+		}
+
+		private class Tag
+		{
+			public int slot;
+
+			public Rigidbody rb;
+
+			public TextMeshPro price;
+
+			public LineRenderer cord;
+
+			public Transform top;
+
+			public Vector3 home;
+
+			public Quaternion homeTurn;
+
+			public Transform hole;
+
+			public float rest;
+
+			public bool pulled;
+
+			public XRNode hand = XRNode.Head;
+
+			public float denyUntil = -1f;
+
+			public int need;
+
+			public int key = int.MinValue;
+		}
+
 		[Header("Cosmetics")]
 		public Cosmetics cosmetics = new Cosmetics();
 
@@ -59,6 +119,34 @@ namespace Ragdoll
 
 		public GameObject fireworks;
 
+		[Header("Bundles")]
+		public Bundle[] bundles = new Bundle[10]
+		{
+			new Bundle { name = "SPORTY", head = "Baseball Hat", torso = "Tank Top", legs = "Shorts", face = "" },
+			new Bundle { name = "DJ", head = "Headphones", torso = "Hoodie", legs = "Sneakers", face = "Sunglasses" },
+			new Bundle { name = "CHEF", head = "Chef Hat", torso = "Apron", legs = "Shorts", face = "Mustache" },
+			new Bundle { name = "SNOW DAY", head = "Beanie", torso = "Scarf", legs = "Rain Boots", face = "Ski Goggles" },
+			new Bundle { name = "BUILDER", head = "Hard Hat Knuck", torso = "Hi Vis Vest", legs = "Rain Boots", face = "" },
+			new Bundle { name = "PARTY", head = "Party Hat", torso = "Bow Tie", legs = "Tutu", face = "Clown Nose" },
+			new Bundle { name = "COWBOY", head = "Cowboy Hat", torso = "Scarf", legs = "Rain Boots", face = "Mustache" },
+			new Bundle { name = "GENTLEMAN", head = "Top Hat", torso = "Bow Tie", legs = "Shorts", face = "Mustache" },
+			new Bundle { name = "SOLDIER", head = "Military Hat", torso = "Backpack", legs = "Sneakers", face = "Eyepatch" },
+			new Bundle { name = "VIKING", head = "Viking Helmet", torso = "Cape", legs = "Rain Boots", face = "Eyepatch" }
+		};
+
+		[Header("Shop")]
+		public Rigidbody brush;
+
+		public GameObject paintSplat;
+
+		public AudioClip paintSound;
+
+		public AudioClip denySound;
+
+		public GameObject buyBurst;
+
+		public static XRNode brushHand = XRNode.Head;
+
 		private static readonly string[] swayBones = { "UpperTorso", "Head", "UpperArm.L", "UpperArm.R", "LowerArm.L", "LowerArm.R" };
 
 		private readonly XRNode[] nodes = { XRNode.LeftHand, XRNode.RightHand };
@@ -67,7 +155,33 @@ namespace Ragdoll
 
 		private readonly int[] hover = { -1, -1, -1 };
 
-		private int seenPaints = -1;
+		private int seen = int.MinValue;
+
+		private int bundle = -1;
+
+		private int brushPaint = 1;
+
+		private bool brushHeld;
+
+		private bool brushTouching;
+
+		private float hintAlpha;
+
+		private XRNode hintHand = XRNode.Head;
+
+		private Renderer bristles;
+
+		private int bristleIndex;
+
+		private Transform brushTip;
+
+		private Collider paintZone;
+
+		private TextMeshPro brushHint;
+
+		private Tag[] tags;
+
+		private const float TagPull = 0.1f;
 
 		private readonly bool[] held = new bool[3];
 
@@ -91,7 +205,7 @@ namespace Ragdoll
 
 		private float blinkAt;
 
-		public const int ColorSlot = 4;
+		public const int BundleSlot = 4;
 
 		private static readonly string[] Places = { "1ST", "2ND", "3RD" };
 
@@ -160,6 +274,56 @@ namespace Ragdoll
 			{
 				cosmetics.Wear(slot, Prefs.outfit[slot]);
 			}
+			cosmetics.Cover(body);
+			bristles = brush ? brush.GetComponentInChildren<Renderer>() : null;
+			if (bristles)
+			{
+				Material[] mats = bristles.sharedMaterials;
+				for (int i = 0; i < mats.Length; i++)
+				{
+					if (mats[i] && mats[i].name == "Brush")
+					{
+						bristleIndex = i;
+					}
+				}
+			}
+			brushTip = brush ? brush.transform.Find("Tip") : null;
+			Transform zone = transform.Find("Paint Zone");
+			paintZone = zone ? zone.GetComponent<Collider>() : null;
+			Transform hint = transform.Find("Brush Hint");
+			brushHint = hint ? hint.GetComponent<TextMeshPro>() : null;
+			if (brushHint)
+			{
+				brushHint.gameObject.SetActive(false);
+			}
+			tags = new Tag[Cosmetics.Slots.Length];
+			for (int i = 0; i < tags.Length; i++)
+			{
+				Transform tag = transform.Find("Price Tag " + Cosmetics.Slots[i]);
+				if (!tag)
+				{
+					continue;
+				}
+				Transform hole = tag.Find("Hole");
+				Transform cord = transform.Find("Tag Cord " + Cosmetics.Slots[i]);
+				tags[i] = new Tag
+				{
+					slot = i,
+					rb = tag.GetComponent<Rigidbody>(),
+					price = tag.GetComponentInChildren<TextMeshPro>(true),
+					cord = cord ? cord.GetComponent<LineRenderer>() : null,
+					top = transform.Find("Tag Top " + Cosmetics.Slots[i]),
+					home = tag.position,
+					homeTurn = tag.rotation,
+					hole = hole ? hole : tag
+				};
+				if (tags[i].top)
+				{
+					tags[i].rest = Vector3.Distance(tags[i].hole.position, tags[i].top.position);
+				}
+			}
+			brushPaint = Prefs.color < 1 ? 1 : Prefs.color;
+			TintBrush();
 			Refresh();
 			Idle();
 			Podium();
@@ -496,7 +660,8 @@ namespace Ragdoll
 					copy.List(slot).Add(new Cosmetics.Item
 					{
 						name = item.name,
-						parts = parts.ToArray()
+						parts = parts.ToArray(),
+						cover = item.cover
 					});
 				}
 			}
@@ -517,43 +682,200 @@ namespace Ragdoll
 
 		public string Choose(int slot, int step)
 		{
-			if (slot == ColorSlot)
+			if (slot == BundleSlot)
 			{
-				StepColor(step);
+				if (bundles == null || bundles.Length == 0)
+				{
+					return "";
+				}
+				bundle = bundle < 0 ? (step > 0 ? 0 : bundles.Length - 1) : ((bundle + step) % bundles.Length + bundles.Length) % bundles.Length;
+				for (int s = 0; s < Cosmetics.Slots.Length; s++)
+				{
+					Show(s, bundles[bundle].Item(s) ?? "");
+				}
+				Prefs.Save();
 				Refresh();
-				return "";
+				Player.Note("wardrobe bundle -> " + bundles[bundle].name);
+				return bundles[bundle].name;
 			}
-			string pick = cosmetics.Step(slot, Prefs.outfit[slot], step);
-			Prefs.outfit[slot] = pick;
+			int count = cosmetics.List(slot).Count;
+			string pick = cosmetics.worn[slot];
+			for (int i = 0; i < count + 1; i++)
+			{
+				pick = cosmetics.Step(slot, pick, step);
+				if (pick != "Crown" || Account.Champion)
+				{
+					break;
+				}
+			}
+			Show(slot, pick);
 			Prefs.Save();
-			cosmetics.Wear(slot, pick);
+			Refresh();
+			Player.Note("wardrobe " + Cosmetics.Slots[slot] + " -> " + (pick == "" ? "None" : pick) + (Account.Owned(pick) ? "" : " (locked)"));
+			return pick;
+		}
+
+		private void Show(int slot, string item)
+		{
+			cosmetics.Wear(slot, item);
+			string worn = cosmetics.worn[slot];
+			if (!Account.Owned(worn))
+			{
+				return;
+			}
+			Prefs.outfit[slot] = worn;
 			if (Player.main)
 			{
-				Player.main.Wear(slot, pick);
+				Player.main.Wear(slot, worn);
 			}
-			Refresh();
-			Player.Note("wardrobe " + Cosmetics.Slots[slot] + " -> " + (pick == "" ? "None" : pick));
-			return pick;
 		}
 
 		private void Refresh()
 		{
-			for (int i = 0; i < labels.Length && i < cosmetics.worn.Length; i++)
+			if (cosmetics.worn[0] == "Crown" && Account.ChampionKnown && !Account.Champion)
 			{
-				string worn = cosmetics.worn[i];
+				cosmetics.Wear(0, Prefs.outfit[0] == "Crown" ? "" : Prefs.outfit[0]);
+			}
+			else if (cosmetics.worn[0] == "" && Account.Champion && Prefs.outfit[0] == "Crown")
+			{
+				cosmetics.Wear(0, "Crown");
+			}
+			for (int i = 0; i < labels.Length && i < BundleSlot && i < cosmetics.worn.Length; i++)
+			{
 				if (labels[i])
 				{
-					labels[i].text = worn == "" ? "NONE" : worn.ToUpper();
+					labels[i].text = Label(cosmetics.worn[i]);
 				}
 			}
-			if (labels.Length <= ColorSlot || !labels[ColorSlot])
+			if (labels.Length > BundleSlot && labels[BundleSlot])
+			{
+				Bundle match = null;
+				if (bundles != null)
+				{
+					foreach (Bundle b in bundles)
+					{
+						bool same = true;
+						for (int s = 0; same && s < Cosmetics.Slots.Length; s++)
+						{
+							same = (b.Item(s) ?? "") == cosmetics.worn[s];
+						}
+						if (same)
+						{
+							match = b;
+							break;
+						}
+					}
+				}
+				bool locked = false;
+				for (int s = 0; s < Cosmetics.Slots.Length; s++)
+				{
+					locked |= !Account.Owned(cosmetics.worn[s]);
+				}
+				bool gold = match != null && locked;
+				labels[BundleSlot].text = match != null ? match.name : "BUNDLES";
+				labels[BundleSlot].color = new Color(1f, gold ? 0.88f : 1f, gold ? 0.3f : 1f, 1f);
+			}
+			if (tags == null)
 			{
 				return;
 			}
-			Color[] palette = Palette();
-			bool random = Prefs.color < 1 || Prefs.color > palette.Length;
-			labels[ColorSlot].text = random ? "RANDOM" : GameManager.ColorName(Prefs.color);
-			labels[ColorSlot].color = random ? Color.white : palette[Prefs.color - 1];
+			foreach (Tag t in tags)
+			{
+				if (t != null)
+				{
+					t.key = int.MinValue;
+				}
+			}
+		}
+
+		private static string Label(string item)
+		{
+			if (item == "")
+			{
+				return "NONE";
+			}
+			if (item == "Crown")
+			{
+				return "<color=#FFE14D>#1 CROWN</color>";
+			}
+			if (!Account.Owned(item))
+			{
+				return "<color=#FF8C8C>(LOCKED)</color> " + item.ToUpper();
+			}
+			return item.ToUpper();
+		}
+
+		private void Tags()
+		{
+			if (tags == null)
+			{
+				return;
+			}
+			foreach (Tag t in tags)
+			{
+				if (t == null || !t.rb)
+				{
+					continue;
+				}
+				string item = cosmetics.worn[t.slot];
+				bool show = item != "" && Account.Cost(item) >= 1 && !Account.Owned(item);
+				if (show != t.rb.gameObject.activeSelf)
+				{
+					if (!show)
+					{
+						Release(t);
+					}
+					t.rb.gameObject.SetActive(show);
+					if (t.cord)
+					{
+						t.cord.gameObject.SetActive(show);
+					}
+					t.key = int.MinValue;
+				}
+				if (!show || !t.price)
+				{
+					continue;
+				}
+				bool denied = Time.time < t.denyUntil;
+				int key = item.GetHashCode() * 31 + (denied ? t.need + 1 : 0) + (Account.Unlocking ? 7 : 0);
+				if (key == t.key)
+				{
+					continue;
+				}
+				t.key = key;
+				if (denied)
+				{
+					t.price.text = "<color=#E53935>" + (t.need > 0 ? "NEED\n" + t.need : "SHOP\nOFFLINE") + "</color>";
+				}
+				else
+				{
+					t.price.text = Account.Unlocking ? "..." : Account.Cost(item) + "\n<size=40%>PULL TO BUY</size>";
+				}
+			}
+		}
+
+		private void Release(Tag t)
+		{
+			Player me = Player.main;
+			if (me)
+			{
+				Rigidbody[] hands = new Rigidbody[2] { me.leftHand, me.rightHand };
+				foreach (Rigidbody hand in hands)
+				{
+					HandGrab grab = hand ? hand.GetComponent<HandGrab>() : null;
+					if (grab && grab.grabbing && grab.held == t.rb)
+					{
+						grab.Drop("price tag");
+					}
+				}
+			}
+			t.pulled = false;
+			t.rb.linearVelocity = Vector3.zero;
+			t.rb.angularVelocity = Vector3.zero;
+			t.rb.position = t.home;
+			t.rb.rotation = t.homeTurn;
+			t.rb.transform.SetPositionAndRotation(t.home, t.homeTurn);
+			Cord(t);
 		}
 
 		private static Color[] Palette()
@@ -566,7 +888,76 @@ namespace Ragdoll
 			return new Color[0];
 		}
 
-		private void StepColor(int step)
+		public static bool Busy(XRNode hand)
+		{
+			return brushHand == hand;
+		}
+
+		private void OnDisable()
+		{
+			brushHand = XRNode.Head;
+		}
+
+		private void TintBrush()
+		{
+			if (!bristles)
+			{
+				return;
+			}
+			Color[] palette = Palette();
+			if (brushPaint < 1 || brushPaint > palette.Length)
+			{
+				return;
+			}
+			Color c = palette[brushPaint - 1];
+			bristles.GetPropertyBlock(block, bristleIndex);
+			block.SetColor("_TopColor", c);
+			block.SetColor("_BottomColor", Color.Lerp(c, Color.white, 0.35f));
+			block.SetColor("_BaseColor", c);
+			bristles.SetPropertyBlock(block, bristleIndex);
+		}
+
+		private void Brush(Player me)
+		{
+			if (!brush)
+			{
+				return;
+			}
+			XRNode node = XRNode.Head;
+			bool holding = me && me.Holds(brush, out node);
+			brushHand = holding ? node : XRNode.Head;
+			if (!holding)
+			{
+				brushHeld = true;
+				brushTouching = false;
+				Hint(me, false);
+				return;
+			}
+			int h = node == XRNode.LeftHand ? 0 : 1;
+			if (!devices[h].isValid)
+			{
+				devices[h] = InputDevices.GetDeviceAtXRNode(nodes[h]);
+			}
+			bool press = devices[h].TryGetFeatureValue(CommonUsages.secondaryButton, out bool down) && down;
+			if (press && !brushHeld)
+			{
+				NextPaint(node);
+			}
+			brushHeld = press;
+			bool touching = false;
+			if (paintZone && brushTip && (paintZone.ClosestPoint(brushTip.position) - brushTip.position).sqrMagnitude < pokeReach * pokeReach)
+			{
+				if (!brushTouching)
+				{
+					PaintMe(node);
+				}
+				touching = true;
+			}
+			brushTouching = touching;
+			Hint(me, true);
+		}
+
+		private void NextPaint(XRNode hand)
 		{
 			Color[] palette = Palette();
 			int n = palette.Length;
@@ -574,25 +965,224 @@ namespace Ragdoll
 			{
 				return;
 			}
-			int from = (Prefs.color >= 1 && Prefs.color <= n) ? Prefs.color : (step < 1 ? 1 : 0);
 			for (int i = 1; i <= n; i++)
 			{
-				int index = ((from + step * i - 1) % n + n) % n;
-				int pick = index + 1;
-				if (NetworkPlayer.TakenByOthers(pick))
+				int pick = (brushPaint + i - 1) % n + 1;
+				if (!NetworkPlayer.TakenByOthers(pick))
 				{
-					continue;
+					brushPaint = pick;
+					break;
 				}
-				Prefs.color = pick;
-				Prefs.Save();
-				Player main = Player.main;
-				if (main && !(NetworkManager.main && NetworkManager.main.InRoom))
-				{
-					main.cosmetics.Tint(main.transform, palette[index]);
-				}
-				Player.Note("wardrobe color -> " + GameManager.ColorName(pick));
+			}
+			TintBrush();
+			Player.Hand(hand, 0.15f, 0.03f);
+		}
+
+		private void PaintMe(XRNode hand)
+		{
+			Color[] palette = Palette();
+			if (brushPaint < 1 || brushPaint > palette.Length)
+			{
 				return;
 			}
+			if (NetworkPlayer.TakenByOthers(brushPaint))
+			{
+				Player.Hand(hand, 0.1f, 0.06f);
+				return;
+			}
+			Color c = palette[brushPaint - 1];
+			Prefs.color = brushPaint;
+			Prefs.Save();
+			Player main = Player.main;
+			if (main && !(NetworkManager.main && NetworkManager.main.InRoom))
+			{
+				main.cosmetics.Tint(main.transform, c);
+			}
+			if (paintSplat)
+			{
+				GameObject fx = Instantiate(paintSplat, brushTip.position, Quaternion.identity);
+				foreach (ParticleSystem ps in fx.GetComponentsInChildren<ParticleSystem>())
+				{
+					ParticleSystem.MainModule m = ps.main;
+					m.startColor = c;
+				}
+				Destroy(fx, 3f);
+			}
+			if (paintSound)
+			{
+				AudioSource.PlayClipAtPoint(paintSound, brushTip.position, Prefs.sfx);
+			}
+			Player.Hand(hand, 0.5f, 0.08f);
+			Player.Note("wardrobe paint -> " + GameManager.ColorName(brushPaint));
+		}
+
+		private void Hint(Player me, bool holding)
+		{
+			if (!brushHint)
+			{
+				return;
+			}
+			Transform cam = me ? me.cam : null;
+			float want = 0f;
+			if (holding && cam)
+			{
+				Vector3 to = brush.position - cam.position;
+				if (to.magnitude < 2.5f && Vector3.Angle(to, cam.forward) < 70f)
+				{
+					want = 1f;
+				}
+			}
+			hintAlpha = Mathf.MoveTowards(hintAlpha, want, Time.deltaTime / 0.15f);
+			bool show = hintAlpha > 0f && cam;
+			if (show != brushHint.gameObject.activeSelf)
+			{
+				brushHint.gameObject.SetActive(show);
+			}
+			if (!show)
+			{
+				return;
+			}
+			if (hintHand != brushHand && brushHand != XRNode.Head)
+			{
+				hintHand = brushHand;
+				brushHint.text = "PRESS <color=#FFE14D>" + (hintHand == XRNode.LeftHand ? "Y" : "B") + "</color> TO CHANGE COLOR\nTAP THE DUMMY TO PAINT YOURSELF";
+			}
+			float a = Mathf.Clamp01(hintAlpha);
+			float ease = 3f * a * a - 2f * a * a * a;
+			brushHint.transform.localScale = Vector3.one * Mathf.Lerp(ease, 1f, 0.4f);
+			Vector3 at = bristles ? new Vector3(bristles.bounds.center.x, bristles.bounds.max.y + 0.16f, bristles.bounds.center.z) : brush.position + Vector3.up * 0.2f;
+			brushHint.transform.SetPositionAndRotation(at, Quaternion.LookRotation(at - cam.position));
+		}
+
+		private void FixedUpdate()
+		{
+			if (tags == null)
+			{
+				return;
+			}
+			Player me = Player.main;
+			foreach (Tag t in tags)
+			{
+				if (t != null && t.rb && t.rb.gameObject.activeInHierarchy)
+				{
+					Pull(me, t);
+				}
+			}
+		}
+
+		private void Pull(Player me, Tag t)
+		{
+			XRNode node = XRNode.Head;
+			HandGrab grab = null;
+			if (me && me.Holds(t.rb, out node))
+			{
+				Rigidbody hand = node == XRNode.LeftHand ? me.leftHand : me.rightHand;
+				grab = hand ? hand.GetComponent<HandGrab>() : null;
+			}
+			if (!grab)
+			{
+				t.pulled = false;
+				return;
+			}
+			if (t.pulled || !t.top)
+			{
+				return;
+			}
+			if (Vector3.Distance(t.hole.position, t.top.position) - t.rest < TagPull)
+			{
+				return;
+			}
+			t.pulled = true;
+			grab.Drop("price tag");
+			Buy(t, node);
+		}
+
+		private static void Cord(Tag t)
+		{
+			if (!t.cord || !t.top || !t.hole)
+			{
+				return;
+			}
+			t.cord.SetPosition(0, t.top.position);
+			t.cord.SetPosition(1, t.hole.position);
+		}
+
+		private static Vector3 HandPoint(Player me, XRNode node)
+		{
+			Transform target = node == XRNode.LeftHand ? me.handTargetL : me.handTargetR;
+			if (target)
+			{
+				return target.position;
+			}
+			return (node == XRNode.LeftHand ? me.leftHand : me.rightHand).position;
+		}
+
+		private void Buy(Tag t, XRNode node)
+		{
+			string item = cosmetics.worn[t.slot];
+			int cost = Account.Cost(item);
+			if (cost < 1 || Account.Owned(item) || Account.Unlocking)
+			{
+				Player.Hand(node, 0.1f, 0.05f);
+				return;
+			}
+			if (!Account.Ready && !Account.Practice)
+			{
+				Deny(t, node, 0);
+				return;
+			}
+			if (Account.Teeth < cost)
+			{
+				Deny(t, node, cost - Account.Teeth);
+				return;
+			}
+			Vector3 at = t.rb.position;
+			Account.Unlock(item, ok =>
+			{
+				if (!this)
+				{
+					return;
+				}
+				if (!ok)
+				{
+					Deny(t, node, Mathf.Max(0, cost - Account.Teeth));
+					return;
+				}
+				if (cosmetics.worn[t.slot] == item)
+				{
+					Prefs.outfit[t.slot] = item;
+					Prefs.Save();
+					if (Player.main)
+					{
+						Player.main.Wear(t.slot, item);
+					}
+				}
+				Player.Note("wardrobe bought " + item + " for " + cost);
+				Celebrate(at, node);
+				Refresh();
+			});
+		}
+
+		private void Deny(Tag t, XRNode node, int need)
+		{
+			t.need = need;
+			t.key = int.MinValue;
+			t.denyUntil = Time.time + 2f;
+			if (denySound)
+			{
+				AudioSource.PlayClipAtPoint(denySound, t.home, Prefs.sfx);
+			}
+			Player.Hand(node, 0.15f, 0.15f);
+		}
+
+		private void Celebrate(Vector3 at, XRNode node)
+		{
+			Transform around = sway != null && sway.Length > 1 && sway[1] ? sway[1] : body;
+			Account.Purchased();
+			Effect(buyBurst, at, 0.8f, 4f);
+			Effect(fireworks, transform.position + Vector3.up * 3.2f, 0.8f, 6f);
+			Account.Spray(around, 20, false);
+			Player.Hand(node, 0.8f, 0.25f);
 		}
 
 		private void LateUpdate()
@@ -606,18 +1196,23 @@ namespace Ragdoll
 			{
 				cosmetics.Tint(body, main.cosmetics.color);
 			}
-			int paints = 0;
-			foreach (NetworkPlayer avatar in NetworkPlayer.avatars)
+			int now = Account.OwnedCount * 31 + (Account.Champion ? 1 : 0) + (Account.Ready ? 2 : 0);
+			if (now != seen)
 			{
-				if (avatar)
-				{
-					paints = paints * 31 + avatar.Paint;
-				}
-			}
-			if (paints != seenPaints)
-			{
-				seenPaints = paints;
+				seen = now;
 				Refresh();
+			}
+			Brush(main);
+			Tags();
+			if (tags != null)
+			{
+				foreach (Tag t in tags)
+				{
+					if (t != null && t.rb && t.rb.gameObject.activeInHierarchy)
+					{
+						Cord(t);
+					}
+				}
 			}
 			Poke(main);
 			if (main && main.inVR)

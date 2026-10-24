@@ -14,6 +14,8 @@ namespace Ragdoll
 			public string name;
 
 			public GameObject[] parts;
+
+			public Vector2 cover;
 		}
 
 		public static readonly string[] Slots = { "Head", "Torso", "Legs", "Face" };
@@ -39,6 +41,13 @@ namespace Ragdoll
 		private const float clothShade = 0.85f;
 
 		private MaterialPropertyBlock block;
+
+		[NonSerialized]
+		private Transform owner;
+
+		private static readonly Dictionary<(Mesh, Vector2), Mesh> hollows = new Dictionary<(Mesh, Vector2), Mesh>();
+
+		private static readonly Dictionary<Mesh, Mesh> wholes = new Dictionary<Mesh, Mesh>();
 
 		public List<Item> List(int slot)
 		{
@@ -96,6 +105,114 @@ namespace Ragdoll
 					}
 				}
 			}
+			if (slot == 2 && owner)
+			{
+				Cover(owner);
+			}
+		}
+
+		public static Mesh Whole(Mesh m)
+		{
+			if (!m)
+			{
+				return m;
+			}
+			return wholes.TryGetValue(m, out Mesh whole) ? whole : m;
+		}
+
+		public void Cover(Transform body)
+		{
+			owner = body;
+			Vector2 band = Vector2.zero;
+			foreach (Item item in legs)
+			{
+				if (item.name == worn[2])
+				{
+					band = item.cover;
+				}
+			}
+			foreach (SkinnedMeshRenderer r in body.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+			{
+				if (!r.sharedMesh || Owns(r.transform))
+				{
+					continue;
+				}
+				if (!skin)
+				{
+					skin = r.sharedMaterial;
+				}
+				if (r.sharedMaterial != skin)
+				{
+					continue;
+				}
+				Mesh mesh = Whole(r.sharedMesh);
+				if (band.y > band.x)
+				{
+					mesh = Hollow(mesh, band);
+				}
+				if (r.sharedMesh != mesh)
+				{
+					r.sharedMesh = mesh;
+				}
+			}
+		}
+
+		private static Mesh Hollow(Mesh source, Vector2 band)
+		{
+			(Mesh, Vector2) key = (source, band);
+			if (hollows.TryGetValue(key, out Mesh cached) && cached)
+			{
+				return cached;
+			}
+			if (!source.isReadable)
+			{
+				return source;
+			}
+			foreach ((Mesh, Vector2) stale in new List<(Mesh, Vector2)>(hollows.Keys))
+			{
+				if (stale.Item1)
+				{
+					continue;
+				}
+				Mesh dead = hollows[stale];
+				hollows.Remove(stale);
+				if (dead)
+				{
+					wholes.Remove(dead);
+					UnityEngine.Object.Destroy(dead);
+				}
+			}
+			Mesh mesh = UnityEngine.Object.Instantiate(source);
+			mesh.name = source.name + " Covered";
+			Vector3[] vertices = source.vertices;
+			List<int> kept = new List<int>();
+			for (int sub = 0; sub < source.subMeshCount; sub++)
+			{
+				int[] triangles = source.GetTriangles(sub);
+				kept.Clear();
+				for (int i = 0; i < triangles.Length; i += 3)
+				{
+					Vector3 a = vertices[triangles[i]];
+					Vector3 b = vertices[triangles[i + 1]];
+					Vector3 c = vertices[triangles[i + 2]];
+					float z = (a.z + b.z + c.z) / 3f;
+					if (z > band.x && z < band.y)
+					{
+						Vector2 mid = new Vector2(Mathf.Abs((a.x + b.x + c.x) / 3f), Mathf.Abs((a.y + b.y + c.y) / 3f));
+						if (mid.x < 0.3f && mid.y < 0.25f)
+						{
+							continue;
+						}
+					}
+					kept.Add(triangles[i]);
+					kept.Add(triangles[i + 1]);
+					kept.Add(triangles[i + 2]);
+				}
+				mesh.SetTriangles(kept, sub);
+			}
+			hollows[key] = mesh;
+			wholes[mesh] = source;
+			return mesh;
 		}
 
 		public string Step(int slot, string from, int step)
@@ -117,6 +234,10 @@ namespace Ragdoll
 		public void Tint(Transform body, Color c)
 		{
 			color = c;
+			if (owner != body)
+			{
+				Cover(body);
+			}
 			if (block == null)
 			{
 				block = new MaterialPropertyBlock();

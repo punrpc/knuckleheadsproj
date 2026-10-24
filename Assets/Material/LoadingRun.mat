@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: LoadingRun
-  m_Shader: {fileID: 4800000, guid: ab767bcf3c35f204b9b6a8990f49a16b, type: 3}
+  m_Shader: {fileID: 4800000, guid: c3b18331eece589479f54dec6807805d, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -24,7 +24,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
       _MainTex:
-        m_Texture: {fileID: 2800000, guid: 5806fa940a496424688f379e2cb2d6c1, type: 3}
+        m_Texture: {fileID: 2800000, guid: 187caad72c176cf408ed7afa33563d82, type: 3}
         m_Scale: {x: 0.125, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: {}

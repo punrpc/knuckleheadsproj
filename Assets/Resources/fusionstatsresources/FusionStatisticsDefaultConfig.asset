@@ -77,10 +77,10 @@ MonoBehaviour:
   RenderZeroAsTransparent: 1
   DontDisplayZeroOnLastValue: 1
   StatisticsPages:
-  - {fileID: 114900271049623953, guid: 07e5e95d5516ea749ba2a5ac9a56bd22, type: 2}
-  - {fileID: 114292246286975720, guid: f4f8d48c14a4cbb40b8221b638214fa5, type: 2}
-  - {fileID: 114302127217294661, guid: b1fd787db6400cc4a9314c551f41f642, type: 2}
-  - {fileID: 114002669891404536, guid: 3bc9f70132334494ab990ecf689659cb, type: 2}
-  - {fileID: 114044625135789424, guid: 960c6b4af70bbcc458e9798a482632e3, type: 2}
-  - {fileID: 114370222726513266, guid: ab8868ddfda133248b0ad2cd166d7ea5, type: 2}
-  - {fileID: 114976365255789935, guid: 2741fc958f850a64aa328d168e8cc378, type: 2}
+  - {fileID: 114900271049623953, guid: 1765b3756557cfb459d5143aa051bab7, type: 2}
+  - {fileID: 114292246286975720, guid: 56524bba992689e4ab49a62ded0b68ef, type: 2}
+  - {fileID: 114302127217294661, guid: 6c1690dea37c8ed4fa7d088cc15000d1, type: 2}
+  - {fileID: 114002669891404536, guid: e892400c68505b04385609c8380dcdad, type: 2}
+  - {fileID: 114044625135789424, guid: 51cae8a329b3b874ab828546af7ff39e, type: 2}
+  - {fileID: 114370222726513266, guid: 1956486d257eaa14f8c6e6d8969c9a35, type: 2}
+  - {fileID: 114976365255789935, guid: f2618915f3f759e40b575517cfe5025c, type: 2}

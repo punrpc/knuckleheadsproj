@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Lava
-  m_Shader: {fileID: 4800000, guid: c9f69211527562f41a2995f1c12146f5, type: 3}
+  m_Shader: {fileID: 4800000, guid: 8670edb2e81e490499a47439dede463f, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -24,11 +24,11 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
       _CausticMap:
-        m_Texture: {fileID: 2800000, guid: 67d2aa9ac4c562f4889fd5e86b6f308d, type: 3}
+        m_Texture: {fileID: 2800000, guid: 2e26dfe15b6569747928ccfc8c0feeb0, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
       _NoiseMap:
-        m_Texture: {fileID: 2800000, guid: 9dfe0f809bd3b284ba79f3876fffa116, type: 3}
+        m_Texture: {fileID: 2800000, guid: 856bc53da5494c84199e60933d29841b, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: {}

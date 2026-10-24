@@ -2,43 +2,50 @@
 %TAG !u! tag:unity3d.com,2011:
 --- !u!1045 &1
 EditorBuildSettings:
-  m_ObjectHideFlags: 0
   serializedVersion: 2
+  m_ObjectHideFlags: 0
   m_Scenes:
   - enabled: 1
     path: Assets/Scenes/MainMenu/MainMenu.unity
-    guid: af33adbe3e2bba647874dcad96a16a7e
+    guid: 8c4492b3cd2cda045955c86d3738cc2b
   - enabled: 1
     path: Assets/Scenes/TestScene/TestScene.unity
-    guid: b14a6df335a16744ca1ef49d6e172f5a
+    guid: 6e31fd36cede5694d9ca08d700fc052d
   - enabled: 1
     path: Assets/Scenes/HangTime/HangTime.unity
-    guid: 4dce3e379f537d44d9d383f081834975
+    guid: d3683b81af6a24c438b0d61afd9a8cd9
   - enabled: 1
     path: Assets/Scenes/GreenStack/GreenStack.unity
-    guid: a7b0e20ee3601434ba9bf74d10db403a
+    guid: 3fa94f51e48310141b458f13896f904e
   - enabled: 1
     path: Assets/Scenes/ChopShop/ChopShop.unity
-    guid: 1bbc49ba51daa594ab39292eaaf232a8
+    guid: e149dd292b93096488305d9473fb37f7
   - enabled: 1
     path: Assets/Scenes/BusyBelts/BusyBelts.unity
-    guid: 03ac8d4f1106fce42b921f67f8ebc570
+    guid: 1c611516df22c974a9268a619be5b70e
   - enabled: 1
     path: Assets/Scenes/AirHeads/AirHeads.unity
-    guid: 7a83f26e1dc73e948871c81028c76ab2
+    guid: 30af11e73d69fe246855aa7115acc6df
   - enabled: 1
     path: Assets/Scenes/Tutorial/Tutorial.unity
-    guid: 894e757758b9f374db596a50facc1fef
+    guid: 8f74fafe1eda7ee46af80499dd4841d2
   - enabled: 1
     path: Assets/Scenes/BrawlBridge/BrawlBridge.unity
-    guid: 90bb87b7790d78e45bd6c48b960f12da
+    guid: 7ca333c66fb4e1347b4755114059bd70
   - enabled: 1
     path: Assets/Scenes/RushHour/RushHour.unity
-    guid: 4b4ed38479a7a8f4bbf218389807b022
+    guid: 1ec5a16d4a1e2cb4990f4ba6ce830efa
   - enabled: 1
     path: Assets/Scenes/TrainWreck/TrainWreck.unity
-    guid: 294492f116c517744a942023e22e5801
-  m_configObjects:
-    com.unity.xr.management.loader_settings: {fileID: 11400000, guid: 64e0f2562b1c97641a0b12bb76bffb27, type: 2}
-    com.unity.xr.openxr.settings4: {fileID: 11400000, guid: 134fec1b6f9bf1c4a8945517fe72bd90, type: 2}
+    guid: bfbfbffb37c0aea4490d8d2fa51cfa07
+  - enabled: 1
+    path: Assets/Scenes/Rooftops/Rooftops.unity
+    guid: 99a20ed66a938554cb43c20edfd3e40f
+  - enabled: 1
+    path: Assets/Scenes/Ring/Ring.unity
+    guid: f97e00da9d70c1745bf6cfed2d0c9c0f
+  - enabled: 1
+    path: Assets/Scenes/Sewer/Sewer.unity
+    guid: da21c201df9b75c46960ece587360c02
+  m_configObjects: {}
   m_UseUCBPForAssetBundles: 0

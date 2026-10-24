@@ -43,6 +43,8 @@ namespace Ragdoll
 
 		private const int Talk = 128;
 
+		private const int Flop = 256;
+
 		private const float Closer = 2f;
 
 		private const int Crowded = 3;
@@ -127,6 +129,12 @@ namespace Ragdoll
 
 		private int reposeFrame = -1;
 
+		private bool rebind;
+
+		private GameObject fading;
+
+		private readonly List<Renderer> veiled = new List<Renderer>();
+
 		[Networked]
 		public int Kind { get; set; }
 
@@ -162,6 +170,18 @@ namespace Ragdoll
 				if (Object && Object.IsValid)
 				{
 					return (State & Gone) == 0;
+				}
+				return false;
+			}
+		}
+
+		public bool Down
+		{
+			get
+			{
+				if (Object && Object.IsValid)
+				{
+					return (State & (Out | Gone | Flop)) != 0;
 				}
 				return false;
 			}
@@ -249,6 +269,10 @@ namespace Ragdoll
 		public override void Despawned(NetworkRunner runner, bool hasState)
 		{
 			all.Remove(this);
+			if (fading)
+			{
+				Destroy(fading);
+			}
 			if (dummy)
 			{
 				Destroy(dummy.transform.root.gameObject);
@@ -318,7 +342,20 @@ namespace Ragdoll
 				}
 			}
 			keptVel = rootVel;
-			if (puppet)
+			if (fading)
+			{
+				Destroy(fading);
+			}
+			fading = null;
+			if (puppet && keptHas != 0)
+			{
+				fading = puppet.gameObject;
+				foreach (Collider col in fading.GetComponentsInChildren<Collider>())
+				{
+					col.enabled = false;
+				}
+			}
+			else if (puppet)
 			{
 				Destroy(puppet.gameObject);
 			}
@@ -342,6 +379,18 @@ namespace Ragdoll
 				spot.y = hit.point.y;
 			}
 			Real(pre, spot, turn);
+			veiled.Clear();
+			if (keptHas != 0 && dummy)
+			{
+				foreach (Renderer r in dummy.transform.root.GetComponentsInChildren<Renderer>())
+				{
+					if (r.enabled)
+					{
+						r.enabled = false;
+						veiled.Add(r);
+					}
+				}
+			}
 			if (keptHas != 0)
 			{
 				foreach (Rigidbody bone in bones)
@@ -362,12 +411,26 @@ namespace Ragdoll
 				body.KnockOut(at, false);
 			}
 			reposeFrame = (keptHas != 0 && dummy) ? Time.frameCount : (-1);
+			rebind = (State & Out) != 0;
 			Player.Note("took over a " + (SlapDummy.Kind)Mathf.Clamp(Kind, 1, 4) + " (" + Kos + " knockouts), I'm the nearest player");
 		}
 
 		private void Repose()
 		{
 			reposeFrame = -1;
+			if (fading)
+			{
+				Destroy(fading);
+			}
+			fading = null;
+			foreach (Renderer r in veiled)
+			{
+				if (r)
+				{
+					r.enabled = true;
+				}
+			}
+			veiled.Clear();
 			if (!dummy || !body)
 			{
 				return;
@@ -383,6 +446,22 @@ namespace Ragdoll
 					bone.linearVelocity = keptVel;
 					bone.angularVelocity = Vector3.zero;
 				}
+			}
+			body.Reframe();
+			Player me = Player.main;
+			if (!rebind || !me)
+			{
+				return;
+			}
+			rebind = false;
+			Physics.SyncTransforms();
+			if (Near(me, me.leftHand, 1f))
+			{
+				me.Regrab(true, dummy.transform.root);
+			}
+			if (Near(me, me.rightHand, 1f))
+			{
+				me.Regrab(false, dummy.transform.root);
 			}
 		}
 
@@ -421,6 +500,13 @@ namespace Ragdoll
 
 		private void GiveUp()
 		{
+			if (fading)
+			{
+				Destroy(fading);
+			}
+			fading = null;
+			veiled.Clear();
+			reposeFrame = -1;
 			if (dummy)
 			{
 				Destroy(dummy.transform.root.gameObject);
@@ -483,6 +569,7 @@ namespace Ragdoll
 					}
 				}
 			}
+			copy.AddComponent<Grabbable>().enabled = false;
 			Find(copy.transform);
 			for (int i = 0; i < Bones; i++)
 			{
@@ -596,6 +683,10 @@ namespace Ragdoll
 			{
 				state |= Out;
 			}
+			if (body.Ragdolled())
+			{
+				state |= Flop;
+			}
 			if (Grasped())
 			{
 				state |= Kept;
@@ -663,11 +754,11 @@ namespace Ragdoll
 
 		private bool Busy()
 		{
-			if (body.flopped || dummy.Punching || dummy.Pouncing || dummy.Clinging)
+			if (body.flopped || dummy.Punching || dummy.Pouncing || dummy.Clinging || dummy.Hauling)
 			{
 				return true;
 			}
-			return dummy.Hauling;
+			return dummy.Scaling;
 		}
 
 		private bool Grasped()
@@ -806,7 +897,7 @@ namespace Ragdoll
 			}
 			else
 			{
-				rootVel = (lastRootAt >= 0f && now - lastRootAt > 0.001f && now - lastRootAt < 0.3f) ? ((root - lastRoot) / (now - lastRootAt)) : Vector3.zero;
+				rootVel = (lastRootAt >= 0f && now - lastRootAt < 0.3f && (root - lastRoot).sqrMagnitude < Snap * Snap) ? ((root - lastRoot) / Mathf.Max(now - lastRootAt, Runner.DeltaTime)) : Vector3.zero;
 				lastRoot = root;
 				lastRootAt = Time.time;
 			}
@@ -922,7 +1013,7 @@ namespace Ragdoll
 				}
 				return;
 			}
-			if (rb == me.leftHand || rb == me.rightHand || rb == me.leftForearm || rb == me.rightForearm)
+			if (!me.Ragdolled() && (rb == me.leftHand || rb == me.rightHand || rb == me.leftForearm || rb == me.rightForearm))
 			{
 				Rigidbody hand = (rb == me.leftForearm) ? me.leftHand : ((rb == me.rightForearm) ? me.rightHand : rb);
 				float swing = me.SwingSpeed(hand, 6);

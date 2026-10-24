@@ -29,7 +29,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BaseMap:
-        m_Texture: {fileID: 2800000, guid: 3e43fcb7bd519e3469774a28a4ef50aa, type: 3}
+        m_Texture: {fileID: 2800000, guid: 159dcc9da6a095444a495243dd08b678, type: 3}
         m_Scale: {x: 6, y: 6}
         m_Offset: {x: 0, y: 0}
     - _BumpMap:
@@ -41,7 +41,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 3e43fcb7bd519e3469774a28a4ef50aa, type: 3}
+        m_Texture: {fileID: 2800000, guid: 159dcc9da6a095444a495243dd08b678, type: 3}
         m_Scale: {x: 6, y: 6}
         m_Offset: {x: 0, y: 0}
     - _SpecGlossMap:
@@ -105,7 +105,7 @@ Material:
     - _SpecColor: {r: 0.19999993, g: 0.19999993, b: 0.19999993, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 0
---- !u!114 &8231472793087615196
+--- !u!114 &7766188984942445259
 MonoBehaviour:
   m_ObjectHideFlags: 11
   m_CorrespondingSourceObject: {fileID: 0}
@@ -117,4 +117,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Editor::UnityEditor.Rendering.Universal.AssetVersion
-  version: -1
+  version: 10

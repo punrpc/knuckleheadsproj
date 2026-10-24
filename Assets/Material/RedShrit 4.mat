@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: RedShrit 4
-  m_Shader: {fileID: 4800000, guid: c8c9b6b06a4e08d45894e44c1bdbe67c, type: 3}
+  m_Shader: {fileID: 4800000, guid: 41fff3ef6a3f7e24280bd1cb6a9f3d9c, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -26,7 +26,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
       _BaseMap:
-        m_Texture: {fileID: 2800000, guid: 6e6983d957e5b684c9232d0d3740cdf7, type: 3}
+        m_Texture: {fileID: 2800000, guid: 40a65d1b5c00bd0439bdd5a7f2c5b5b1, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: {}

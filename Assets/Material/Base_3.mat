@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Base
-  m_Shader: {fileID: 4800000, guid: fa2ee8c57e9b3694bb93b86b5c2ae5c4, type: 3}
+  m_Shader: {fileID: 4800000, guid: a3dd177c82717944a8bf83ae06e77f7e, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -42,8 +42,8 @@ Material:
       _Wrap: 0.5
       _ZWrite: 1
     m_Colors:
-      _BottomColor: {r: 0.3584906, g: 0.3584906, b: 0.3584906, a: 1}
+      _BottomColor: {r: 1, g: 0.89929247, b: 0.65471697, a: 1}
       _Direction: {r: 0, g: 0, b: 1, a: 0}
-      _TopColor: {r: 0.6301887, g: 0.6301887, b: 0.6301887, a: 1}
+      _TopColor: {r: 1, g: 0.86051023, b: 0.5264151, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 0

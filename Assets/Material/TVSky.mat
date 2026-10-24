@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: TVSky
-  m_Shader: {fileID: 4800000, guid: 5d387e63b02d91d4e8cfbe3dc55e7cb7, type: 3}
+  m_Shader: {fileID: 4800000, guid: 63739e9704acee24383af87cc71aa8ec, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []

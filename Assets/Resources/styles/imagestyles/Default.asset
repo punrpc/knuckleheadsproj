@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   enabled: 1
   icon: {fileID: 0}
-  sprite: {fileID: 21300000, guid: d19a52acacd88f44cad6eae9de27d738, type: 2}
+  sprite: {fileID: 21300000, guid: 8061de381421f7e41881fb90bcc1995e, type: 2}
   color: {r: 1, g: 1, b: 1, a: 1}
   colorHover: {r: 1, g: 1, b: 1, a: 1}
   colorOff: {r: 1, g: 1, b: 1, a: 1}

@@ -43,6 +43,14 @@ namespace Ragdoll
 
 		private static int arrangedScene = -1;
 
+		private const float FreeCeiling = 35f;
+
+		private const float FreeRise = 2.5f;
+
+		private const float FreeSettle = 0.8f;
+
+		private const float FreeGrip = 4f;
+
 		private static readonly Vector2[][] layouts = new Vector2[4][]
 		{
 			new Vector2[5]
@@ -107,6 +115,8 @@ namespace Ragdoll
 		private float ropeMass;
 
 		private int seen;
+
+		private float hanging;
 
 		private NetRope net;
 
@@ -405,6 +415,29 @@ namespace Ragdoll
 			}
 		}
 
+		private float Hanging()
+		{
+			float total = 0f;
+			foreach (Rope rope in ropes)
+			{
+				if (!rope || rope.snapped < 0)
+				{
+					continue;
+				}
+				Rigidbody[] links = rope.Links();
+				bool top = rope.start == envelope;
+				bool bottom = !top && rope.end && rope.end.GetComponentInParent<Rigidbody>() == envelope;
+				for (int i = 0; i < links.Length; i++)
+				{
+					if ((top && i < rope.snapped) || (bottom && i >= rope.snapped))
+					{
+						total += links[i].mass;
+					}
+				}
+			}
+			return total;
+		}
+
 		private void Fly()
 		{
 			if (!envelope)
@@ -428,18 +461,19 @@ namespace Ragdoll
 			if (cut != seen)
 			{
 				seen = cut;
+				hanging = Hanging();
 				Player.Note(name + " has " + (ropes.Length - cut) + " of " + ropes.Length + " cables left");
 			}
 			bool held = ropes.Length == 0 || cut < ropes.Length;
 			float floor = Water.main ? Water.main.Surface : (home.y - 30f);
 			float mass;
 			float extra;
-			float accel;
 			if (!held)
 			{
 				mass = envelope.mass;
 				extra = ropeMass * 0.5f;
-				accel = (2.5f - envelope.linearVelocity.y) * 2f;
+				float rise = Mathf.Clamp((home.y + FreeCeiling - envelope.position.y) * FreeSettle, 0f - FreeRise, FreeRise);
+				envelope.AddForce(Vector3.up * ((envelope.mass + hanging) * (Physics.gravity.magnitude + Mathf.Clamp((rise - envelope.linearVelocity.y) * FreeGrip, -6f, 6f))));
 			}
 			else
 			{
@@ -448,9 +482,9 @@ namespace Ragdoll
 				target = Mathf.Max(target, floor + 6f);
 				mass = envelope.mass;
 				extra = ropeMass + (basket ? basket.mass : 0f);
-				accel = stiffness * (target - envelope.position.y) - 2f * Mathf.Sqrt(stiffness) * envelope.linearVelocity.y;
+				float accel = stiffness * (target - envelope.position.y) - 2f * Mathf.Sqrt(stiffness) * envelope.linearVelocity.y;
+				envelope.AddForce(Vector3.up * ((mass + extra) * (Mathf.Clamp(accel, -3f, 3f) + Physics.gravity.magnitude)));
 			}
-			envelope.AddForce(Vector3.up * ((mass + extra) * (Mathf.Clamp(accel, -3f, 3f) + Physics.gravity.magnitude)));
 			float clock = NetworkManager.Clock;
 			Vector3 push = new Vector3(Mathf.Sin(clock * 0.13f + phase), 0f, Mathf.Cos(clock * 0.09f + phase * 1.7f)) * 0.3f;
 			Vector3 off = envelope.position - home;

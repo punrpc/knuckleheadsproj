@@ -95,6 +95,8 @@ namespace Ragdoll
 		[Header("Climb")]
 		public float climbTime;
 
+		public bool solid;
+
 		[Header("Look")]
 		public Mesh piece;
 
@@ -165,8 +167,7 @@ namespace Ragdoll
 						{
 							continue;
 						}
-						string part = c.attachedRigidbody ? c.attachedRigidbody.name : c.name;
-						if (!part.Contains("Arm") && !part.StartsWith("Hand"))
+						if (!Limb(c))
 						{
 							Physics.IgnoreCollision(col, c, true);
 						}
@@ -668,9 +669,16 @@ namespace Ragdoll
 				return;
 			}
 			Player player = c.collider.GetComponentInParent<Player>();
-			if (player && (player.flopped || player.knockedOut))
+			if (player)
 			{
-				return;
+				if (player.flopped || player.knockedOut)
+				{
+					return;
+				}
+				if (solid && !Limb(c.collider))
+				{
+					return;
+				}
 			}
 			int at = Array.IndexOf(Links(), link);
 			if (at >= 0)
@@ -678,6 +686,12 @@ namespace Ragdoll
 				onHit?.Invoke(at, speed);
 				Wear(at, speed);
 			}
+		}
+
+		private static bool Limb(Collider o)
+		{
+			string part = o.attachedRigidbody ? o.attachedRigidbody.name : o.name;
+			return part.Contains("Arm") || part.StartsWith("Hand");
 		}
 
 		public void Wear(int at, float amount)

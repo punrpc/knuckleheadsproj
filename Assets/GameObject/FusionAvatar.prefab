@@ -46,7 +46,7 @@ MonoBehaviour:
   m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  SortKey: 3355261319
+  SortKey: 438558246
   SendPriority: 1
   EnableInterpolation: 1
   Flags: 262402
@@ -107,3 +107,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1db8ea62a613f0d488f8f6d4a32758db, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _OculusId: 0
+  _LocalAvatarIndex: 0

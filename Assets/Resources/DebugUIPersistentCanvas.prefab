@@ -137,7 +137,7 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier:
   panel: {fileID: 224243736805655561}
-  valuePrefab: {fileID: 224618682377417806, guid: 8237b246803113d45b398029190c7556, type: 2}
+  valuePrefab: {fileID: 224618682377417806, guid: 6dc69d55ede932347820da1072849410, type: 2}
 --- !u!224 &224243736805655561
 RectTransform:
   serializedVersion: 2
@@ -186,7 +186,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 8c0f427d8dbda9143bed568b41bb62f6, type: 2}
+  m_Sprite: {fileID: 21300000, guid: 48d59797c2cebe440ab191a60e7e4796, type: 2}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1

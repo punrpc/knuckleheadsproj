@@ -26,11 +26,11 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BaseMap:
-        m_Texture: {fileID: 8400000, guid: ee6578a2b5805374f8859e697392b5c2, type: 2}
+        m_Texture: {fileID: 8400000, guid: 71bfa115164ba474e922eec7b5d03f4a, type: 2}
         m_Scale: {x: -1, y: 1}
         m_Offset: {x: 1, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 8400000, guid: ee6578a2b5805374f8859e697392b5c2, type: 2}
+        m_Texture: {fileID: 8400000, guid: 71bfa115164ba474e922eec7b5d03f4a, type: 2}
         m_Scale: {x: -1, y: 1}
         m_Offset: {x: 1, y: 0}
     m_Ints: []
@@ -65,7 +65,7 @@ Material:
     - _TopColor: {r: 0.4862745, g: 0.40784314, b: 0.29411766, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 0
---- !u!114 &7958150317362866945
+--- !u!114 &6843613782262769203
 MonoBehaviour:
   m_ObjectHideFlags: 11
   m_CorrespondingSourceObject: {fileID: 0}
@@ -77,4 +77,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Editor::UnityEditor.Rendering.Universal.AssetVersion
-  version: -1
+  version: 10

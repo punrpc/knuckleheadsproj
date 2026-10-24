@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: StatusPill
   m_EditorClassIdentifier:
   enabled: 1
-  icon: {fileID: 2800000, guid: b512f2856029d16499cd373508f4a3aa, type: 3}
+  icon: {fileID: 2800000, guid: bc7e13c24833d08448f8aab171c2324e, type: 3}
   sprite: {fileID: 0}
   color: {r: 0.17254902, g: 1, b: 0.64705884, a: 1}
   colorHover: {r: 0.17254902, g: 1, b: 0.64705884, a: 1}

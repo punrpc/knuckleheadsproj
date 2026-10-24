@@ -16,6 +16,8 @@ public class Island : MonoBehaviour
 	[Range(0f, 1f)]
 	public float bottomTaper;
 
+	public float beach;
+
 	[Header("Look Stuff")]
 	public Material material;
 
@@ -56,6 +58,8 @@ public class Island : MonoBehaviour
 
 	private static readonly int skirtId = Shader.PropertyToID("_SkirtBaseY");
 
+	private static readonly int drapeId = Shader.PropertyToID("_GrassDrape");
+
 	private MeshFilter filter;
 
 	private MeshRenderer rend;
@@ -73,6 +77,12 @@ public class Island : MonoBehaviour
 	private List<Vector2> outline = new List<Vector2>();
 
 	private List<Vector2> bottomRing = new List<Vector2>();
+
+	private List<Vector2> deepRing = new List<Vector2>();
+
+	private List<Vector2> awayDir = new List<Vector2>();
+
+	private float shelf;
 
 	private List<Vector3> quadN = new List<Vector3>();
 
@@ -181,6 +191,7 @@ public class Island : MonoBehaviour
 		SampleOutline();
 		Triangulate();
 		GatherOthers();
+		shelf = (beach > 0f) ? Mathf.Clamp(TopY - seaNow + 1.5f, 0.2f, depth) : depth;
 		verts.Clear();
 		normals.Clear();
 		uv.Clear();
@@ -191,7 +202,16 @@ public class Island : MonoBehaviour
 		tris.Clear();
 		Cap(outline, 0f, true, -1f);
 		Wall();
-		Cap(bottomRing, -depth, false, 1000f);
+		deepRing.Clear();
+		if (beach > 0f && shelf < depth - 0.01f)
+		{
+			Drop();
+		}
+		else
+		{
+			deepRing.AddRange(bottomRing);
+		}
+		Cap(deepRing, -depth, false, 1000f);
 		mesh.Clear();
 		mesh.SetVertices(verts);
 		mesh.SetNormals(normals);
@@ -384,10 +404,22 @@ public class Island : MonoBehaviour
 			outline.Reverse();
 		}
 		bottomRing.Clear();
+		awayDir.Clear();
 		center /= (float)count;
 		for (int i = 0; i < count; i++)
 		{
-			bottomRing.Add(center + (outline[i] - center) * (1f - bottomTaper));
+			if (beach > 0f)
+			{
+				Vector2 into = (outline[i] - outline[(i + count - 1) % count]).normalized;
+				Vector2 outOf = (outline[(i + 1) % count] - outline[i]).normalized;
+				Vector2 bend = into + outOf;
+				awayDir.Add((bend.sqrMagnitude > 0.0001f) ? Vector2.Perpendicular(bend).normalized : Vector2.zero);
+				bottomRing.Add(outline[i] + awayDir[i] * beach);
+			}
+			else
+			{
+				bottomRing.Add(center + (outline[i] - center) * (1f - bottomTaper));
+			}
 		}
 	}
 
@@ -598,6 +630,56 @@ public class Island : MonoBehaviour
 		}
 	}
 
+	private void Drop()
+	{
+		int n = outline.Count;
+		for (int i = 0; i < n; i++)
+		{
+			deepRing.Add(bottomRing[i] + awayDir[i] * (depth - shelf) * 0.6f);
+		}
+		for (int i = 0; i < n; i++)
+		{
+			int j = (i + 1) % n;
+			int v = verts.Count;
+			Vector3 a = new Vector3(bottomRing[i].x, 0f - shelf, bottomRing[i].y);
+			Vector3 b = new Vector3(bottomRing[j].x, 0f - shelf, bottomRing[j].y);
+			Vector3 c = new Vector3(deepRing[j].x, 0f - depth, deepRing[j].y);
+			Vector3 d = new Vector3(deepRing[i].x, 0f - depth, deepRing[i].y);
+			Vector3 q = Vector3.Cross(d - a, b - a).normalized;
+			verts.Add(a);
+			verts.Add(b);
+			verts.Add(c);
+			verts.Add(d);
+			uv.Add(bottomRing[i] / textureSize);
+			uv.Add(bottomRing[j] / textureSize);
+			uv.Add(deepRing[j] / textureSize);
+			uv.Add(deepRing[i] / textureSize);
+			uv2.Add(new Vector2(Shore(a), 999f));
+			uv2.Add(new Vector2(Shore(b), 999f));
+			uv2.Add(new Vector2(Shore(c), 999f));
+			uv2.Add(new Vector2(Shore(d), 999f));
+			for (int k = 0; k < 4; k++)
+			{
+				normals.Add(q);
+				uv3.Add(new Vector2(-1f, 0f));
+				uv4.Add(new Vector2(-999f, 0f));
+				uv5.Add(Vector2.zero);
+			}
+			tris.Add(v);
+			tris.Add(v + 3);
+			tris.Add(v + 2);
+			tris.Add(v);
+			tris.Add(v + 2);
+			tris.Add(v + 1);
+		}
+	}
+
+	private float Shore(Vector3 local)
+	{
+		float drape = (material && material.HasProperty(drapeId)) ? material.GetFloat(drapeId) : 0.5f;
+		return drape + (seaNow + 0.1f - transform.TransformPoint(local).y) * 3f;
+	}
+
 	private Vector3 NearCrease(float along)
 	{
 		float total = ringDist[ringDist.Count - 1];
@@ -632,8 +714,8 @@ public class Island : MonoBehaviour
 		Vector3 n1 = Vector3.Slerp(na, nb, s1);
 		Vector3 p0 = new Vector3(t0.x, 0f, t0.y);
 		Vector3 p1 = new Vector3(t1.x, 0f, t1.y);
-		Vector3 p2 = new Vector3(b1.x, 0f - depth, b1.y);
-		Vector3 p3 = new Vector3(b0.x, 0f - depth, b0.y);
+		Vector3 p2 = new Vector3(b1.x, 0f - shelf, b1.y);
+		Vector3 p3 = new Vector3(b0.x, 0f - shelf, b0.y);
 		int v = verts.Count;
 		verts.Add(p0);
 		verts.Add(p1);
@@ -643,20 +725,31 @@ public class Island : MonoBehaviour
 		normals.Add(n1);
 		normals.Add(n1);
 		normals.Add(n0);
-		uv.Add(new Vector2(d0, 0f) / textureSize);
-		uv.Add(new Vector2(d1, 0f) / textureSize);
-		uv.Add(new Vector2(d1, 0f - depth) / textureSize);
-		uv.Add(new Vector2(d0, 0f - depth) / textureSize);
+		if (beach > 0f)
+		{
+			uv.Add(t0 / textureSize);
+			uv.Add(t1 / textureSize);
+			uv.Add(b1 / textureSize);
+			uv.Add(b0 / textureSize);
+		}
+		else
+		{
+			uv.Add(new Vector2(d0, 0f) / textureSize);
+			uv.Add(new Vector2(d1, 0f) / textureSize);
+			uv.Add(new Vector2(d1, 0f - depth) / textureSize);
+			uv.Add(new Vector2(d0, 0f - depth) / textureSize);
+		}
 		float yi = ri ? ri.TopY : 0f;
 		float yj = rj ? rj.TopY : 0f;
 		float ci = ri ? (Inside(ri, WallAt(t0, b0, yi)) - contactInset) : (-1f);
 		float cj = rj ? (Inside(rj, WallAt(t1, b1, yj)) - contactInset) : (-1f);
 		float hi = ri ? (transform.TransformPoint(p0).y - yi) : 999f;
 		float hj = rj ? (transform.TransformPoint(p1).y - yj) : 999f;
-		uv2.Add(new Vector2(0f, hi));
-		uv2.Add(new Vector2(0f, hj));
-		uv2.Add(new Vector2(depth, rj ? (transform.TransformPoint(p2).y - yj) : 999f));
-		uv2.Add(new Vector2(depth, ri ? (transform.TransformPoint(p3).y - yi) : 999f));
+		uv2.Add(new Vector2((beach > 0f) ? Shore(p0) : 0f, hi));
+		uv2.Add(new Vector2((beach > 0f) ? Shore(p1) : 0f, hj));
+		uv2.Add(new Vector2((beach > 0f) ? Shore(p2) : depth, rj ? (transform.TransformPoint(p2).y - yj) : 999f));
+		uv2.Add(new Vector2((beach > 0f) ? Shore(p3) : depth, ri ? (transform.TransformPoint(p3).y - yi) : 999f));
+
 		uv3.Add(new Vector2(ci, hi));
 		uv3.Add(new Vector2(cj, hj));
 		uv3.Add(new Vector2(cj, hj));

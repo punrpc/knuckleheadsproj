@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: IslandGround
-  m_Shader: {fileID: 4800000, guid: 10c797d0f0c55a24e9693bf27bfc64ef, type: 3}
+  m_Shader: {fileID: 4800000, guid: e79c5b670ea23f440a77f6e4a08afbad, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -24,15 +24,15 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
       _DirtMap:
-        m_Texture: {fileID: 2800000, guid: 19982513b9c54284aa3e3c78f3b83485, type: 3}
+        m_Texture: {fileID: 2800000, guid: 9d542956000b8b841b2a8181ade380e4, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
       _GrassMap:
-        m_Texture: {fileID: 2800000, guid: 19982513b9c54284aa3e3c78f3b83485, type: 3}
+        m_Texture: {fileID: 2800000, guid: 9d542956000b8b841b2a8181ade380e4, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
       _NoiseMap:
-        m_Texture: {fileID: 2800000, guid: 17bea8aad3a32824d9b03d2f66e8e796, type: 3}
+        m_Texture: {fileID: 2800000, guid: 4e09c00f82ae26d4dbb1b7e606e6d8ac, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: {}

@@ -98,8 +98,7 @@ namespace Ragdoll
 			{
 				return true;
 			}
-			UnityEngine.XR.InputDevice device = InputDevices.GetDeviceAtXRNode(XRNode.LeftHand);
-			if (device.isValid && device.TryGetFeatureValue(UnityEngine.XR.CommonUsages.menuButton, out bool menu) && menu)
+			if (Player.Either(InputDevices.GetDeviceAtXRNode(XRNode.LeftHand), UnityEngine.XR.CommonUsages.menuButton, UnityEngine.XR.CommonUsages.primary2DAxisClick))
 			{
 				return true;
 			}

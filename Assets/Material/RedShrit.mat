@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: RedShrit
-  m_Shader: {fileID: 4800000, guid: fa2ee8c57e9b3694bb93b86b5c2ae5c4, type: 3}
+  m_Shader: {fileID: 4800000, guid: a3dd177c82717944a8bf83ae06e77f7e, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:

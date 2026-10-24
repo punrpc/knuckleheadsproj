@@ -24,12 +24,11 @@ MonoBehaviour:
     probeSamplingDebugTexture: {fileID: 0}
     probeVolumeBlendStatesCS: {fileID: 0}
   m_RendererFeatures:
-  - {fileID: 11400000, guid: d592cd5784188614bbb4571235989e69, type: 2}
-  - {fileID: 0}
+  - {fileID: 11400000, guid: 7744eb487fd236441a5cf4b8dd6328b5, type: 2}
   m_RendererFeatureMap: 632ea803b24ec5ac
   m_UseNativeRenderPass: 1
   xrSystemData: {fileID: 0}
-  postProcessData: {fileID: 11400000, guid: cfbccdf73b1b55445a02db3d5fc0a55c, type: 2}
+  postProcessData: {fileID: 11400000, guid: 996c367bce36ac54f96d2e3ca03a2a1d, type: 2}
   m_AssetVersion: 3
   m_PrepassLayerMask:
     serializedVersion: 2

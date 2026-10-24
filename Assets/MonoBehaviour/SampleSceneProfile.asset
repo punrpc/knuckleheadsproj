@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: SampleSceneProfile
   m_EditorClassIdentifier:
   components:
-  - {fileID: 11400000, guid: abcecb7eebae0ab449fdfa6f85ac5ed2, type: 2}
-  - {fileID: 11400000, guid: 08cc87589aabdcf4fbfd3ec90ee5c68c, type: 2}
-  - {fileID: 11400000, guid: 24381bf4bb1bae841a9a20cc7e94127c, type: 2}
+  - {fileID: 11400000, guid: e8bc16d8e9716eb4997a28928697fd5b, type: 2}
+  - {fileID: 11400000, guid: ec3b9cc1e65bc8d49a82fa19d8e7874f, type: 2}
+  - {fileID: 11400000, guid: 022f150cd521bca428aa783f36e3860e, type: 2}

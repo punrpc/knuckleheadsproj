@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: PanelTitle
   m_EditorClassIdentifier:
   textAlignement: 4
-  font: {fileID: 12800000, guid: a53100c9baee084458cc1c0abdd5045b, type: 3}
+  font: {fileID: 12800000, guid: ec2b3a3019d86174cae268a684d8cf26, type: 3}
   fontSize: 14
   fontStyle: 0
   color: {r: 0.6431373, g: 0.6431373, b: 0.64705884, a: 1}

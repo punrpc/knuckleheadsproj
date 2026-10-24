@@ -33,6 +33,8 @@ namespace Ragdoll
 
 		public static bool tutorialDone;
 
+		public static string nick = "";
+
 		public static string region = "cae";
 
 		public static float stickDead = 0.25f;
@@ -71,6 +73,7 @@ namespace Ragdoll
 			color = PlayerPrefs.GetInt("color", 0);
 			myBlabber = PlayerPrefs.GetInt("myBlabber", 0) == 1;
 			tutorialDone = PlayerPrefs.GetInt("tutorial", 0) == 1;
+			nick = PlayerPrefs.GetString("nick", "");
 			region = PlayerPrefs.GetString("region", "cae");
 			stickDead = PlayerPrefs.GetFloat("stickDead", 0.25f);
 			for (int i = 0; i < outfit.Length; i++)
@@ -95,6 +98,7 @@ namespace Ragdoll
 			PlayerPrefs.SetInt("color", color);
 			PlayerPrefs.SetInt("myBlabber", myBlabber ? 1 : 0);
 			PlayerPrefs.SetInt("tutorial", tutorialDone ? 1 : 0);
+			PlayerPrefs.SetString("nick", nick);
 			PlayerPrefs.SetString("region", region);
 			PlayerPrefs.SetFloat("stickDead", stickDead);
 			for (int i = 0; i < outfit.Length; i++)

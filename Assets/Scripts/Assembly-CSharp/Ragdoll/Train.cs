@@ -339,7 +339,7 @@ namespace Ragdoll
 				return;
 			}
 			Vector3 vel = ahead * (speed * rate);
-			if (carried != null && !me.knockedOut && !me.drowned)
+			if (carried != null && ((!me.knockedOut && !me.drowned) || !me.trainHeld))
 			{
 				Release();
 			}

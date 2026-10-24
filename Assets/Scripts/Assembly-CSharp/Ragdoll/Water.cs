@@ -51,6 +51,8 @@ namespace Ragdoll
 
 		public float fogBottom = 2f;
 
+		public float fogFar;
+
 		private static readonly int FogId = Shader.PropertyToID("_HeightFog");
 
 		private static readonly int FogColorId = Shader.PropertyToID("_HeightFogColor");
@@ -141,7 +143,7 @@ namespace Ragdoll
 				return;
 			}
 			float top = Application.isPlaying ? Mathf.Min(fogFrom, Surface) : Surface;
-			Shader.SetGlobalVector(FogId, new Vector4(top + fogTop, Surface + fogBottom, 0f, 0f));
+			Shader.SetGlobalVector(FogId, new Vector4(top + fogTop, Surface + fogBottom, fogFar, 0f));
 			Shader.SetGlobalColor(FogColorId, on ? fogColor.linear : Color.clear);
 		}
 
@@ -245,7 +247,7 @@ namespace Ragdoll
 
 		private void Push(Rigidbody rb, float g)
 		{
-			if (!shapes.TryGetValue(rb, out List<Shape> list))
+			if (!shapes.TryGetValue(rb, out List<Shape> list) || list.Exists((Shape s) => !s.at))
 			{
 				list = Build(rb);
 				shapes[rb] = list;

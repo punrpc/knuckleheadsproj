@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: LoadingLogo
-  m_Shader: {fileID: 4800000, guid: ab767bcf3c35f204b9b6a8990f49a16b, type: 3}
+  m_Shader: {fileID: 4800000, guid: c3b18331eece589479f54dec6807805d, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -24,7 +24,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
       _MainTex:
-        m_Texture: {fileID: 2800000, guid: 8c6a63f6c70819043a1c2f440f80e4ee, type: 3}
+        m_Texture: {fileID: 2800000, guid: 9cece1e6145fbfa4eb3b4b4031d2b96d, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: {}

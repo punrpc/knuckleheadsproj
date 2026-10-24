@@ -118,7 +118,7 @@ namespace Ragdoll
 
 		public float dropHeight = 25f;
 
-		public const int Protocol = 32;
+		public const int Protocol = 36;
 
 		public const string Lost = "CONNECTION LOST";
 
@@ -245,6 +245,10 @@ namespace Ragdoll
 		private static readonly SemaphoreSlim authLock = new SemaphoreSlim(1, 1);
 
 		private const string AuthBaseUrl = "https://dre1mer.org";
+
+		private const string PcFusion = "a06a7807-0143-4472-9db5-20caacde203c";
+
+		private const string PcVoice = "d788a71e-3fd2-434e-b3f8-b84a8859a0b3";
 
 		private static string ticketUserId;
 
@@ -1065,6 +1069,10 @@ namespace Ragdoll
 				r.match = (info.Properties.TryGetValue("match", out SessionProperty match) && match.IsString) ? ((string)match) : "";
 				r.title = (info.Properties.TryGetValue("title", out SessionProperty title) && title.IsString && (string)title != "") ? ((string)title) : ("ROOM " + r.code);
 				r.mode = (info.Properties.TryGetValue("rules", out SessionProperty rules) && rules.IsString && int.TryParse(Rules((string)rules)[0], out int mode)) ? mode : 0;
+				if (r.playing && r.mode < 0)
+				{
+					continue;
+				}
 				int index = rooms.FindIndex((Room o) => o.code == r.code);
 				if (index < 0)
 				{
@@ -1123,6 +1131,14 @@ namespace Ragdoll
 					Player.Note("room title " + title);
 				}
 			}
+		}
+
+		// TODO(recon): nothing in the Android build calls PcName, PcFusion or PcVoice; their caller is probably a PC-only (#if) path that was compiled out (token 0x6000397)
+		private static string PcName()
+		{
+			Prefs.Load();
+			string name = ShortName(Prefs.nick);
+			return name != "" ? name : "KNUCKLEHEAD" + UnityEngine.Random.Range(1000, 10000);
 		}
 
 		private static string ShortName(string raw)

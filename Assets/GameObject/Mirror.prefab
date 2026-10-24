@@ -47,7 +47,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1709254077376921}
-  m_Mesh: {fileID: 4300000, guid: d067797fc0802864daf041acc07dd7a1, type: 2}
+  m_Mesh: {fileID: 4300000, guid: 36bfe8f9ecde3cb459d61b9f973ff962, type: 2}
 --- !u!23 &23703437598541787
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -73,8 +73,8 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 1ce71c12d2718614390883fa1bcbc03c, type: 2}
-  - {fileID: 2100000, guid: 193eab17cfb449c4182f26225ee797a1, type: 2}
+  - {fileID: 2100000, guid: 7c4796a6e4d42784395d8e7f7400eb6c, type: 2}
+  - {fileID: 2100000, guid: ce2b80edb0a73404c9f80851709fb389, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -104,7 +104,7 @@ MeshCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1709254077376921}
-  m_Material: {fileID: 13400000, guid: 25306dae9c3493448898ffc69f688075, type: 2}
+  m_Material: {fileID: 13400000, guid: b17fca913098a6344a829a335e3837d4, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -118,7 +118,7 @@ MeshCollider:
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
-  m_Mesh: {fileID: 4300000, guid: d067797fc0802864daf041acc07dd7a1, type: 2}
+  m_Mesh: {fileID: 4300000, guid: 36bfe8f9ecde3cb459d61b9f973ff962, type: 2}
 --- !u!54 &54099118695303065
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -177,7 +177,7 @@ MonoBehaviour:
   m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  SortKey: 1694479728
+  SortKey: 350155486
   SendPriority: 1
   EnableInterpolation: 1
   Flags: 524546
@@ -210,6 +210,7 @@ MonoBehaviour:
   armFrom: 2.5
   armTo: 1.5
   armHold: 0.3
+  riding: {fileID: 0}
   _Held:
     RawValue: 0
   _By:
@@ -224,7 +225,6 @@ MonoBehaviour:
   _Resting:
     RawValue: 0
   _Wear: 0
-  riding: {fileID: 0}
 --- !u!114 &114709867586078768
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -339,7 +339,7 @@ Camera:
     serializedVersion: 2
     m_Bits: 4294967263
   m_RenderingPath: -1
-  m_TargetTexture: {fileID: 8400000, guid: ee6578a2b5805374f8859e697392b5c2, type: 2}
+  m_TargetTexture: {fileID: 8400000, guid: 71bfa115164ba474e922eec7b5d03f4a, type: 2}
   m_TargetDisplay: 0
   m_TargetEye: 3
   m_HDR: 1

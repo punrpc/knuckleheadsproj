@@ -17,7 +17,7 @@ MonoBehaviour:
   m_RendererType: 1
   m_RendererData: {fileID: 0}
   m_RendererDataList:
-  - {fileID: 11400000, guid: f84e565df02aa594baaaf0bcc4c5d817, type: 2}
+  - {fileID: 11400000, guid: c04a0d3e0ea7ea8459409d746e59fe20, type: 2}
   m_DefaultRendererIndex: 0
   m_RequireDepthTexture: 1
   m_RequireOpaqueTexture: 0
@@ -91,7 +91,7 @@ MonoBehaviour:
   m_MaxPixelLights: 0
   m_ShadowAtlasResolution: 256
   m_VolumeFrameworkUpdateMode: 0
-  m_VolumeProfile: {fileID: 11400000, guid: f857438916f9c494a96be6d5c39a3278, type: 2}
+  m_VolumeProfile: {fileID: 11400000, guid: 8c702a2499310cc48a8f7bf7747d9903, type: 2}
   apvScenesData:
     obsoleteSceneBounds:
       m_Keys: []
@@ -102,5 +102,5 @@ MonoBehaviour:
   m_ShaderVariantLogLevel: 0
   m_ShadowCascades: 0
   m_Textures:
-    blueNoise64LTex: {fileID: 2800000, guid: 01917398cbfc8b645823841291f11917, type: 3}
-    bayerMatrixTex: {fileID: 2800000, guid: 2422512db382f2249979d1c0f4b70b32, type: 3}
+    blueNoise64LTex: {fileID: 2800000, guid: 8ebc40b83e4653f4f9bb936750f16852, type: 3}
+    bayerMatrixTex: {fileID: 2800000, guid: d2e2ab3d99fae124484ca6277efefe72, type: 3}

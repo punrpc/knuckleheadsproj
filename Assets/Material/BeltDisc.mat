@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: BeltDisc
-  m_Shader: {fileID: 4800000, guid: f2b87d1e68a86154da3bec17fb789550, type: 3}
+  m_Shader: {fileID: 4800000, guid: 44b720f1d726e2b48ba5200114d57b94, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
@@ -25,7 +25,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
       _BaseMap:
-        m_Texture: {fileID: 2800000, guid: 2069a86bc7278d24ba033accfb9864bd, type: 3}
+        m_Texture: {fileID: 2800000, guid: 984cea145e7747a42be56783a6f2d7ce, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: {}

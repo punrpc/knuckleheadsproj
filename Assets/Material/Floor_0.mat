@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Floor
-  m_Shader: {fileID: 4800000, guid: 3724b961a82f9644f90c46e10fe801c2, type: 3}
+  m_Shader: {fileID: 4800000, guid: 6dcc200e9087a064cb11ab039c4b7310, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
@@ -25,7 +25,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
       _CheckerMap:
-        m_Texture: {fileID: 2800000, guid: 19982513b9c54284aa3e3c78f3b83485, type: 3}
+        m_Texture: {fileID: 2800000, guid: 9d542956000b8b841b2a8181ade380e4, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
       _SideMap:

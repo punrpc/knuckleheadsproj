@@ -19,6 +19,8 @@ namespace Ragdoll
 
 		public Vector3 axis = Vector3.right;
 
+		public bool topple;
+
 		[Header("Belt")]
 		public float belt;
 
@@ -43,6 +45,19 @@ namespace Ragdoll
 
 		public float slipKick = 3.5f;
 
+		[Header("Fan")]
+		public float fan;
+
+		public float fanHeight = 4f;
+
+		public Transform blades;
+
+		[Header("Ring")]
+		public bool keepIn;
+
+		[Header("Shock")]
+		public bool shock;
+
 		private static readonly Dictionary<Rigidbody, Touch> touches = new Dictionary<Rigidbody, Touch>();
 
 		private static string pinched;
@@ -64,6 +79,44 @@ namespace Ragdoll
 		private const float SlipSpeed = 0.6f;
 
 		private const float DryTraction = 0.5f;
+
+		private const float FanRise = 10f;
+
+		private const float BladeSpin = 600f;
+
+		private const float ToppleSpeed = 2.5f;
+
+		private const float ToppleUp = 1f;
+
+		private const float NpcWireGap = 0.6f;
+
+		private const float NpcWireOut = 3f;
+
+		private const float NpcWireUp = 3f;
+
+		private const float NpcWirePass = 1f;
+
+		private const float RingEdge = 0.3f;
+
+		private readonly Dictionary<Player, float> passing = new Dictionary<Player, float>();
+
+		private readonly List<Player> passed = new List<Player>();
+
+		private static readonly Dictionary<Player, float> npcWired = new Dictionary<Player, float>();
+
+		private static readonly Collider[] blown = new Collider[96];
+
+		private static readonly Dictionary<Player, Rigidbody[]> parts = new Dictionary<Player, Rigidbody[]>();
+
+		private readonly HashSet<Rigidbody> pushed = new HashSet<Rigidbody>();
+
+		private readonly HashSet<Player> lifted = new HashSet<Player>();
+
+		private BoxCollider column;
+
+		private static readonly List<Hazard> rings = new List<Hazard>();
+
+		private Bounds ringBox;
 
 		private Rigidbody body;
 
@@ -119,10 +172,16 @@ namespace Ragdoll
 
 		private static float Rush => 1f + (GameManager.BeltRush - 1f) * SpinRush;
 
+		private bool Parked => topple && GameManager.match != null && !(GameManager.SinceStart > 0f);
+
 		private float Speed => belt * GameManager.BeltRush;
 
 		private void Awake()
 		{
+			if (keepIn)
+			{
+				Ring();
+			}
 			start = transform.localRotation;
 			Renderer r = GetComponentInChildren<Renderer>();
 			middle = r ? r.bounds.center : transform.position;
@@ -232,6 +291,9 @@ namespace Ragdoll
 
 		private void OnDestroy()
 		{
+			rings.Remove(this);
+			parts.Clear();
+			npcWired.Clear();
 			foreach (Rigidbody lane in lanes)
 			{
 				if (lane)
@@ -257,6 +319,10 @@ namespace Ragdoll
 
 		private void Update()
 		{
+			if (blades)
+			{
+				blades.Rotate(Vector3.forward, Time.deltaTime * BladeSpin, Space.Self);
+			}
 			if (belt == 0f || !shown)
 			{
 				return;
@@ -370,6 +436,18 @@ namespace Ragdoll
 		private void FixedUpdate()
 		{
 			Settle();
+			if (fan > 0f)
+			{
+				Blow();
+			}
+			if (passing.Count > 0)
+			{
+				Unpass();
+			}
+			if (keepIn)
+			{
+				KeepIn();
+			}
 			float speed = Speed;
 			for (int i = 0; i < lanes.Count; i++)
 			{
@@ -394,7 +472,8 @@ namespace Ragdoll
 			{
 				return;
 			}
-			float target = Mathf.Repeat(spin * (NetworkManager.Clock + GameManager.BeltLead * 0.5f), 360f);
+			float clock = (topple && GameManager.match != null) ? (Parked ? 0f : GameManager.SinceStart) : NetworkManager.Clock;
+			float target = Mathf.Repeat(spin * (clock + GameManager.BeltLead * 0.5f), 360f);
 			if (float.IsNaN(angle))
 			{
 				angle = target;
@@ -410,6 +489,69 @@ namespace Ragdoll
 				rot = transform.parent.rotation * rot;
 			}
 			rigidbody.MoveRotation(rot);
+		}
+
+		private void Blow()
+		{
+			if (!column)
+			{
+				column = GetComponent<BoxCollider>();
+			}
+			if (!column)
+			{
+				return;
+			}
+			Vector3 center = transform.TransformPoint(column.center);
+			Vector3 half = Vector3.Scale(column.size, transform.lossyScale) * 0.5f;
+			int count = Physics.OverlapBoxNonAlloc(center, half, blown, transform.rotation, -1, QueryTriggerInteraction.Ignore);
+			pushed.Clear();
+			lifted.Clear();
+			float bottom = center.y - half.y;
+			for (int i = 0; i < count; i++)
+			{
+				Rigidbody rb = blown[i].attachedRigidbody;
+				if (!rb || rb.isKinematic || !pushed.Add(rb))
+				{
+					continue;
+				}
+				Player p = rb.GetComponentInParent<Player>();
+				if (!p)
+				{
+					if (rb.linearVelocity.y < FanRise)
+					{
+						rb.AddForce(Vector3.up * FanPush(rb.worldCenterOfMass.y - bottom), ForceMode.Acceleration);
+					}
+				}
+				else if (lifted.Add(p) && p.pelvis)
+				{
+					Lift(p, FanPush(p.pelvis.position.y - bottom));
+				}
+			}
+		}
+
+		private float FanPush(float height)
+		{
+			return fan * (1f - Mathf.Clamp01(height / Mathf.Max(fanHeight, 0.1f)));
+		}
+
+		private static void Lift(Player p, float push)
+		{
+			if (push <= 0f || p.pelvis.linearVelocity.y >= FanRise)
+			{
+				return;
+			}
+			if (!parts.TryGetValue(p, out Rigidbody[] bodies) || bodies.Length == 0 || !bodies[0])
+			{
+				bodies = p.GetComponentsInChildren<Rigidbody>();
+				parts[p] = bodies;
+			}
+			foreach (Rigidbody rb in bodies)
+			{
+				if (rb && !rb.isKinematic)
+				{
+					rb.AddForce(Vector3.up * push, ForceMode.Acceleration);
+				}
+			}
 		}
 
 		private static void Settle()
@@ -475,7 +617,7 @@ namespace Ragdoll
 			{
 				return Along(point) * Speed;
 			}
-			if (!body)
+			if (!body || Parked)
 			{
 				return Vector3.zero;
 			}
@@ -492,6 +634,64 @@ namespace Ragdoll
 			{
 				Wire(c);
 			}
+			if (topple)
+			{
+				Topple(c);
+			}
+			if (shock)
+			{
+				Shock(c);
+			}
+		}
+
+		private void Topple(Collision c)
+		{
+			Player p = Player.Of(c.rigidbody);
+			if (!p || p.flopped || p.knockedOut || p.dead || !p.pelvis || p.pelvis.isKinematic)
+			{
+				return;
+			}
+			if (p != Player.main && !p.dummy)
+			{
+				return;
+			}
+			Vector3 at = (c.contactCount > 0) ? c.GetContact(0).point : p.pelvis.position;
+			if (c.contactCount >= 1 && Mathf.Abs(c.GetContact(0).normal.y) > 0.7f)
+			{
+				return;
+			}
+			Vector3 push = SurfaceVelocity(at);
+			push.y = 0f;
+			Vector3 toward = c.rigidbody.worldCenterOfMass - at;
+			toward.y = 0f;
+			if (Vector3.Dot(push, toward) <= 0f)
+			{
+				return;
+			}
+			p.LetGo("knocked over by the pipe");
+			p.Knock(Vector3.ClampMagnitude(push, ToppleSpeed) + Vector3.up * ToppleUp);
+			if (p == Player.main)
+			{
+				Player.Note("knocked over by " + name + " at " + push.magnitude.ToString("F1") + " m/s");
+			}
+		}
+
+		private void Shock(Collision c)
+		{
+			Player p = Player.Of(c.rigidbody);
+			if (!p || p.dead || p.ghost || p.knockedOut || !p.pelvis || p.pelvis.isKinematic || p.Shielded())
+			{
+				return;
+			}
+			if (p != Player.main && !p.dummy)
+			{
+				return;
+			}
+			if (p == Player.main)
+			{
+				Player.Note("touched " + name + " with " + c.rigidbody.name);
+			}
+			p.KnockOut(middle, true);
 		}
 
 		private void OnCollisionStay(Collision c)
@@ -504,7 +704,12 @@ namespace Ragdoll
 			{
 				Wire(c);
 			}
+			if (shock)
+			{
+				Shock(c);
+			}
 		}
+
 
 		private void OnTriggerStay(Collider other)
 		{
@@ -604,7 +809,7 @@ namespace Ragdoll
 		{
 			Player me = Player.main;
 			Rigidbody rb = c.rigidbody;
-			if (!me || !rb || me.dead || !me.IsMine(rb.transform))
+			if (!rb)
 			{
 				return;
 			}
@@ -616,6 +821,11 @@ namespace Ragdoll
 				return;
 			}
 			away.Normalize();
+			if (!me || me.dead || !me.IsMine(rb.transform))
+			{
+				NpcWire(rb, away);
+				return;
+			}
 			if (me.flopped || me.rising || me.knockedOut)
 			{
 				rb.AddForce(away * hold, ForceMode.Acceleration);
@@ -624,5 +834,144 @@ namespace Ragdoll
 			wired = true;
 			wirePush = away * push + Vector3.up * lift;
 		}
+
+		private void Ring()
+		{
+			column = GetComponent<BoxCollider>();
+			if (!column)
+			{
+				return;
+			}
+			Vector3 half = column.size * 0.5f;
+			ringBox = new Bounds(transform.TransformPoint(column.center), Vector3.zero);
+			for (int i = 0; i < 8; i++)
+			{
+				ringBox.Encapsulate(transform.TransformPoint(column.center + new Vector3(((i & 1) == 0) ? (0f - half.x) : half.x, ((i & 2) == 0) ? (0f - half.y) : half.y, ((i & 4) == 0) ? (0f - half.z) : half.z)));
+			}
+			column.enabled = false;
+			rings.Add(this);
+		}
+
+		public static bool OutOfRing(Vector3 p)
+		{
+			foreach (Hazard ring in rings)
+			{
+				if (ring && (p.x < ring.ringBox.min.x + RingEdge || p.x > ring.ringBox.max.x - RingEdge || p.z < ring.ringBox.min.z + RingEdge || p.z > ring.ringBox.max.z - RingEdge))
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
+		private void KeepIn()
+		{
+			if (!rings.Contains(this))
+			{
+				return;
+			}
+			Player me = Player.main;
+			if (me && !me.dummy)
+			{
+				Out(me, ringBox);
+			}
+			for (int i = SlapDummy.alive.Count - 1; i >= 0; i--)
+			{
+				SlapDummy dummy = (i < SlapDummy.alive.Count) ? SlapDummy.alive[i] : null;
+				if (dummy && !dummy.Gone && dummy.kind != SlapDummy.Kind.Dummy)
+				{
+					Player npc = dummy.Body;
+					if (npc)
+					{
+						Out(npc, ringBox);
+					}
+				}
+			}
+		}
+
+		private static void Out(Player p, Bounds inside)
+		{
+			if (p.dead || !p.pelvis || p.pelvis.isKinematic)
+			{
+				return;
+			}
+			Vector3 at = p.pelvis.position;
+			if (at.x > inside.min.x && at.x < inside.max.x && at.z > inside.min.z && at.z < inside.max.z)
+			{
+				return;
+			}
+			if (p.grounded || !(at.y > inside.min.y))
+			{
+				p.Kill("fell out of the ring");
+			}
+
+		}
+
+		private void Pass(Player p, bool on)
+		{
+			Collider[] mine = GetComponentsInChildren<Collider>();
+			foreach (Collider a in p.GetComponentsInChildren<Collider>())
+			{
+				foreach (Collider b in mine)
+				{
+					if (a && b && !b.isTrigger)
+					{
+						Physics.IgnoreCollision(a, b, on);
+					}
+				}
+			}
+		}
+
+		private void Unpass()
+		{
+			passed.Clear();
+			foreach (KeyValuePair<Player, float> pass in passing)
+			{
+				if (!pass.Key || Time.time >= pass.Value)
+				{
+					passed.Add(pass.Key);
+				}
+			}
+			foreach (Player p in passed)
+			{
+				if (p)
+				{
+					Pass(p, false);
+				}
+				passing.Remove(p);
+				npcWired.Remove(p);
+			}
+		}
+
+		private void NpcWire(Rigidbody rb, Vector3 inward)
+		{
+			if (rb.isKinematic)
+			{
+				return;
+			}
+			Player npc = rb.GetComponentInParent<Player>();
+			if (!npc || !npc.dummy || npc.dead)
+			{
+				return;
+			}
+			if (npcWired.TryGetValue(npc, out float at) && Time.time < at + NpcWireGap)
+			{
+				rb.AddForce(inward * hold, ForceMode.Acceleration);
+				return;
+			}
+			npcWired[npc] = Time.time;
+			npc.LetGo("barbed wire");
+			npc.Knock(Vector3.zero);
+			Pass(npc, true);
+			passing[npc] = Time.time + NpcWirePass;
+			foreach (Rigidbody part in npc.GetComponentsInChildren<Rigidbody>())
+			{
+				if (part && !part.isKinematic)
+				{
+					part.linearVelocity = inward * NpcWireOut + Vector3.up * NpcWireUp;
+				}
+			}
+		}
+
 	}
 }

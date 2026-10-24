@@ -325,8 +325,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "> PAIRED SUCCESSFULLY,\n\nCONNECT A STREAMING PLATFORM IN LIV HUB\nTO CONTINUE"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 61ba550fd6edd4b49abddcd76e9bff44, type: 2}
-  m_sharedMaterial: {fileID: 2100000, guid: 827f8bac4c2d3924b9e5b7c7bbd72bd6, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 4009228977a20604ca312c21eab5c34a, type: 2}
+  m_sharedMaterial: {fileID: 2100000, guid: 664d67ea7dc1e30478d24fd9846f6327, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -442,7 +442,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: c42e2d23481c96840b7bed5c64074044, type: 2}
+  m_Sprite: {fileID: 21300000, guid: b945b7df6244ea146833919ea4f99730, type: 2}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -502,8 +502,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: 'Error: Something went wrong!'
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 61ba550fd6edd4b49abddcd76e9bff44, type: 2}
-  m_sharedMaterial: {fileID: 2100000, guid: 827f8bac4c2d3924b9e5b7c7bbd72bd6, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 4009228977a20604ca312c21eab5c34a, type: 2}
+  m_sharedMaterial: {fileID: 2100000, guid: 664d67ea7dc1e30478d24fd9846f6327, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []

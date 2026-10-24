@@ -68,7 +68,7 @@ Shader "Junkyard/Checker Top" {
 			float _AODirect;
 			float _AODebug;
 
-			// Global height fog (below _HeightFog.x, fully in at _HeightFog.y).
+			// Global height fog (below _HeightFog.x, fully in at _HeightFog.y; z = distance-fog colour blend).
 			float4 _HeightFog;
 			half4 _HeightFogColor;
 
@@ -229,9 +229,14 @@ Shader "Junkyard/Checker Top" {
 				float3 color = lighting * albedo;
 				color = MixFog(color, input.fogFactor);
 
+				// With _HeightFog.z > 0 the height-fog colour blends toward the distance-fog colour far from the camera.
+				float distanceFog = length(input.positionWS - _WorldSpaceCameraPos) * unity_FogParams.x;
+				distanceFog = (1.0 - exp2(-distanceFog * distanceFog)) * _HeightFog.z;
+				float3 heightFogColor = 0.0 < _HeightFog.z ? lerp(_HeightFogColor.rgb, unity_FogColor.rgb, distanceFog) : _HeightFogColor.rgb;
+
 				float heightFog = saturate((_HeightFog.x - input.positionWS.y) / max(_HeightFog.x - _HeightFog.y, 0.01));
 				heightFog = heightFog * heightFog * (3.0 - 2.0 * heightFog) * _HeightFogColor.a;
-				color = lerp(color, _HeightFogColor.rgb, heightFog);
+				color = lerp(color, heightFogColor, heightFog);
 				return half4(color, 1.0);
 			}
 			ENDHLSL

@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: GhostHand
-  m_Shader: {fileID: 4800000, guid: 84743a429b73b4e4dbb0c876a4fbae63, type: 3}
+  m_Shader: {fileID: 4800000, guid: 31106d75f7408784886c524bc3f7271f, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []

@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Stage Beam
-  m_Shader: {fileID: 4800000, guid: 531b922e817e59841b2386154e0c1fc6, type: 3}
+  m_Shader: {fileID: 4800000, guid: 3c54344bc55fe8f43b5bc41caa4dbb7a, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []

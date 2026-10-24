@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b5a1f07dc5afe854f9f12a4194aca3fb, type: 3}
+  m_Name: Android
+  m_EditorClassIdentifier:
+  features:
+  - {fileID: 11400000, guid: 7fd0601656116a84594ddb132a8e0358, type: 2}
+  - {fileID: 11400000, guid: dd293d84adb6e0d4c985332cd0207e7f, type: 2}
+  - {fileID: 11400000, guid: 41bdd21622b37d045b9dbfcf74d91ae9, type: 2}
+  - {fileID: 11400000, guid: 9e588c6710b0c2a4a921ca03c5642832, type: 2}
+  - {fileID: 11400000, guid: de1ae011b967ce446adf4af4601e6774, type: 2}
+  - {fileID: 11400000, guid: 29435670faf7b324aa7b4d03f769b9d1, type: 2}
+  - {fileID: 11400000, guid: 350271bdf0c85c648b2b7ae641ee73eb, type: 2}
+  - {fileID: 11400000, guid: 4548b536291445d4bb24aade69db9d71, type: 2}
+  - {fileID: 11400000, guid: 7cb84d7c8987a5b4fb3d1e70248303e6, type: 2}
+  - {fileID: 11400000, guid: 9c763fff65a01134fa600965c4001787, type: 2}
+  - {fileID: 11400000, guid: 78b5a66d1140def4aba5013dbbc4135e, type: 2}
+  - {fileID: 11400000, guid: 19483213a1ab1fe4f91284a583e381bb, type: 2}
+  - {fileID: 11400000, guid: be18d863a6758d343828a83ffa2f0185, type: 2}
+  - {fileID: 11400000, guid: 324d9eb9744dfb642931f840207f4824, type: 2}
+  - {fileID: 11400000, guid: 93a1394c70e43f844babb6d362a860c6, type: 2}
+  - {fileID: 11400000, guid: 298529b580cb907429c666966e77a706, type: 2}
+  - {fileID: 11400000, guid: d80ec934d741ccb4c890f36a5a703308, type: 2}
+  - {fileID: 11400000, guid: ecb7ef2ca469c654dbda9c0352772bc8, type: 2}
+  - {fileID: 11400000, guid: 93cf5f6eee66b0441941f241e6c8cca9, type: 2}
+  - {fileID: 11400000, guid: ccab11d901b1e424fb930774eebe1636, type: 2}
+  - {fileID: 11400000, guid: d533c21b7147edc4aa69c59342c07c57, type: 2}
+  - {fileID: 11400000, guid: 20acab16dd8a122478f40cbad67998bc, type: 2}
+  - {fileID: 11400000, guid: 6eda798b864683d45967d4e6336422b4, type: 2}
+  - {fileID: 11400000, guid: b3fe70d09dcd6ea418d58217778b3418, type: 2}
+  - {fileID: 11400000, guid: f68e4394461f4da4b8d043592d48292f, type: 2}
+  - {fileID: 11400000, guid: 7de0cb6d30c30b54bbf109a4fec38b52, type: 2}
+  - {fileID: 11400000, guid: e2584793a978a914c851d14159733645, type: 2}
+  - {fileID: 11400000, guid: e146b1dcfb9bef24a83f05b44d7e85a9, type: 2}
+  - {fileID: 11400000, guid: 09da451ab52505b4f8798ebfb7cc5344, type: 2}
+  m_renderMode: 1
+  m_latencyOptimization: 0
+  m_autoColorSubmissionMode: 1
+  m_colorSubmissionModes:
+    m_List: 00000000
+  m_depthSubmissionMode: 0
+  m_spacewarpMotionVectorTextureFormat: 0
+  m_optimizeBufferDiscards: 1
+  m_symmetricProjection: 1
+  m_optimizeMultiviewRenderRegions: 0
+  m_multiviewRenderRegionsOptimizationMode: 0
+  m_hasMigratedMultiviewRenderRegionSetting: 1
+  m_foveatedRenderingApi: 1
+  m_useOpenXRPredictedTime: 0

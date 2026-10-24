@@ -1,8 +1,7 @@
 # Knuckleheads (Quest): Unity project
 
-A Unity 6 project of **Knuckleheads** (`com.LoosetoothGames.Knuckleheads`, version 36), a
-physics ragdoll brawler for Meta Quest built on Photon Fusion. It compiles, connects online
-and builds for Quest.
+A Unity 6 project of **Knuckleheads** (`com.LoosetoothGames.Knuckleheads`, version 42), a
+physics ragdoll brawler for Meta Quest built on Photon Fusion.
 
 This is a private learning and sideloading project. The game, its art and its code belong to
 Loosetooth Games. Don't publish builds of it.
@@ -14,7 +13,8 @@ Loosetooth Games. Don't publish builds of it.
 | (this folder) | The Unity project. Open it in Unity **6000.2.7f2**. |
 | `Assets/Scripts/Assembly-CSharp/` | Game code (`Ragdoll.*`, `Island`). |
 | `Assets/Shader/` | The game's custom URP shaders. |
-| `Assets/Scenes/` | The 11 build scenes, from MainMenu and Tutorial to the maps. |
+| `Assets/Scenes/` | The 14 build scenes, from MainMenu and Tutorial to the maps (v42 added Rooftops, Ring and Sewer). |
+| `Assets/Scripts/PlayFab/` | PlayFab SDK as recovered from the build (declarations only, no working SDK). |
 | `Assets/Photon/` | Photon Fusion 2.1.1 and Photon Voice 2.64 (Realtime 5). |
 | `Packages/` | Package manifest, plus the embedded LIV Creator Kit 1.4.7. |
 | `Docs/BACKEND_AUTH.md` | Notes on the online sign-in, which is currently off. |
@@ -36,6 +36,9 @@ Loosetooth Games. Don't publish builds of it.
   - `Ragdoll/DiscordLog.cs` posts player joins and leaves to a Discord webhook.
   - `Ragdoll/DeskControlsHud.cs` shows the on-screen PC controls panel.
   - `NetworkManager.SignIn()` signs in anonymously and gives players random `PLAYER####` names.
+  - `Account` (XP, levels, gold teeth, shop, leaderboards) starts in the game's offline
+    practice mode (`Account.Offline = true`), so it never contacts the original developer's
+    login server. Progress saves locally on each headset and the shop is free.
 
 ## Networking
 
@@ -50,7 +53,7 @@ Loosetooth Games. Don't publish builds of it.
 ## Building for Quest
 
 The project is already set up like the original build:
-- Android, IL2CPP ARM64, Vulkan only, ASTC, minSdk 32 / targetSdk 34, version 36.
+- Android, IL2CPP ARM64, Vulkan only, ASTC, minSdk 32 / targetSdk 34, version 42.
 - OpenXR on Android, Single Pass Instanced, with Meta Quest Support, Meta XR, foveation,
   performance settings, the game's 90 Hz refresh-rate feature, and the Touch / Touch Pro /
   Touch Plus controller profiles.
@@ -77,7 +80,10 @@ first so the mouse locks. An on-screen panel lists the controls; **Insert** hide
 
 ## Known gaps
 
-- **Not checked on a headset yet.** Online play is only verified in the editor.
+- **v42 not opened in Unity yet.** The code compiles against Unity's references outside the
+  editor, but scenes, shaders, Fusion weaving and the OpenXR settings still need an in-editor check.
+- **Not checked on a headset yet.** Online play is only verified in the editor (on v36).
+- **Network protocol 36:** v42 clients can't join rooms of the old v36 build.
 - **Rotation order:** a few rotation orders in movement, getting up, aiming, Drawbridge and
   TrainWreck may need adjusting if something turns the wrong way.
 - **Meta app ID:** `Assets/Resources/OculusPlatformSettings.asset` still has the original

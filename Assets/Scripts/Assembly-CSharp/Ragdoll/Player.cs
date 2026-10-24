@@ -787,6 +787,12 @@ namespace Ragdoll
 		[HideInInspector]
 		public bool frozen;
 
+		private bool floating;
+
+		private readonly List<Renderer> floatHid = new List<Renderer>();
+
+		private readonly List<Rigidbody> floatGrav = new List<Rigidbody>();
+
 		[HideInInspector]
 		public bool aiOn;
 
@@ -982,6 +988,14 @@ namespace Ragdoll
 
 		private const float FallFollow = 1f;
 
+		private float stickCrouch;
+
+		private const float CrouchFrom = 0.5f;
+
+		private const float CrouchFull = 0.9f;
+
+		private const float CrouchDepth = 0.55f;
+
 		private Collider crossL;
 
 		private Collider crossR;
@@ -995,6 +1009,8 @@ namespace Ragdoll
 		private float passClear = 0.03f;
 
 		private static bool forearmPass = true;
+
+		private static bool selfClash = true;
 
 		public static bool feetGround = true;
 
@@ -1894,6 +1910,8 @@ namespace Ragdoll
 
 		private float neckStand;
 
+		private float standRise = 0.3f;
+
 		private bool neckStandKnown;
 
 		private Vector3 lastNeckWorld;
@@ -2015,6 +2033,10 @@ namespace Ragdoll
 		private int stepsWorst;
 
 		private int frames;
+
+		private int doubleSteps;
+
+		private int noSteps;
 
 		private float frameSum;
 
@@ -2228,7 +2250,7 @@ namespace Ragdoll
 
 		private float koGrow = 1.5f;
 
-		private float koMax = 9f;
+		private float koMax = 6f;
 
 		private float koForget = 45f;
 
@@ -2500,6 +2522,8 @@ namespace Ragdoll
 
 		private float tuck = 0.5f;
 
+		private float crouchLow = 0.12f;
+
 		private float vaultTuck = 0.15f;
 
 		private float jumpShare = 2f;
@@ -2527,6 +2551,8 @@ namespace Ragdoll
 		private Water water;
 
 		private float underSince = -1f;
+
+		private bool handedOver;
 
 		private bool fellEarly;
 
@@ -3000,6 +3026,8 @@ namespace Ragdoll
 			Mic();
 			if (!dummy)
 			{
+				Tracker.frameAt = Time.time;
+				Tracker.frameDt += (Time.deltaTime - Tracker.frameDt) * 0.1f;
 				FollowTrackers();
 			}
 			UpdateRig();
@@ -3157,19 +3185,27 @@ namespace Ragdoll
 			}
 			gcSeen = gc;
 			stepsWorst = Mathf.Max(stepsWorst, stepsSeen);
+			if (stepsSeen >= 2)
+			{
+				doubleSteps++;
+			}
+			else if (stepsSeen == 0)
+			{
+				noSteps++;
+			}
 			stepsSeen = 0;
 			if (Time.unscaledTime > perfAt)
 			{
 				if (perfAt > 0f && frames >= 1)
 				{
-					Note("perf fps " + (frames / Mathf.Max(frameSum, 0.001f)).ToString("F0") + " worst frame " + (frameWorst * 1000f).ToString("F0") + " ms, physics steps per frame max " + stepsWorst + (inVR ? " vr" : " desk") + (timed > 0 ? ", cpu " + (cpuSum / timed).ToString("F1") + " ms (main " + (mainSum / timed).ToString("F1") + " render " + (renderSum / timed).ToString("F1") + " present wait " + (waitSum / timed).ToString("F1") + ") gpu " + (gpuSum / timed).ToString("F1") + " ms (worst " + gpuWorst.ToString("F0") + ")" : "") + MeterText() + (ghost ? " ghost" : "") + " in " + UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
+					Note("perf fps " + (frames / Mathf.Max(frameSum, 0.001f)).ToString("F0") + " worst frame " + (frameWorst * 1000f).ToString("F0") + " ms, physics steps per frame max " + stepsWorst + " (2+ in " + (doubleSteps * 100f / Mathf.Max(frames, 1)).ToString("F0") + "%, 0 in " + (noSteps * 100f / Mathf.Max(frames, 1)).ToString("F0") + "%)" + (inVR ? " vr" : " desk") + (timed > 0 ? ", cpu " + (cpuSum / timed).ToString("F1") + " ms (main " + (mainSum / timed).ToString("F1") + " render " + (renderSum / timed).ToString("F1") + " present wait " + (waitSum / timed).ToString("F1") + ") gpu " + (gpuSum / timed).ToString("F1") + " ms (worst " + gpuWorst.ToString("F0") + ")" : "") + MeterText() + (ghost ? " ghost" : "") + " in " + UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
 				}
 				timed = 0;
 				cpuSum = gpuSum = renderSum = waitSum = gpuWorst = mainSum = 0f;
 				drawSum = trisSum = setPassSum = castersSum = gcSum = 0f;
 				appGpuSum = appGpuWorst = appCpuSum = 0f;
 				counted = metered = 0;
-				stepsWorst = frames = 0;
+				stepsWorst = frames = doubleSteps = noSteps = 0;
 				frameSum = frameWorst = 0f;
 				perfAt = Time.unscaledTime + 10f;
 			}
@@ -3781,6 +3817,12 @@ namespace Ragdoll
 			return grabR && grabR.held == rb;
 		}
 
+		public bool Holds(Rigidbody rb, out XRNode hand)
+		{
+			hand = grabR && grabR.held == rb ? XRNode.RightHand : XRNode.LeftHand;
+			return Holds(rb);
+		}
+
 		public void LetGo(string why = null)
 		{
 			if (grabL)
@@ -3810,6 +3852,15 @@ namespace Ragdoll
 			if (grabR && grabR.held == rb)
 			{
 				grabR.GaveWay();
+			}
+		}
+
+		public void Regrab(bool left, Transform npc)
+		{
+			HandGrab g = left ? grabL : grabR;
+			if (g)
+			{
+				g.Rebind(npc);
 			}
 		}
 
@@ -4185,7 +4236,8 @@ namespace Ragdoll
 
 		private float GroundUnder(Vector3 at)
 		{
-			int count = Physics.RaycastNonAlloc(at + Vector3.up * 3f, Vector3.down, hits, 20f, -1, QueryTriggerInteraction.Ignore);
+			Vector3 from = new Vector3(at.x, Mathf.Min(at.y + 3f, neck.y), at.z);
+			int count = Physics.RaycastNonAlloc(from, Vector3.down, hits, 20f, -1, QueryTriggerInteraction.Ignore);
 			float best = float.MinValue;
 			for (int i = 0; i < count; i++)
 			{
@@ -4605,6 +4657,14 @@ namespace Ragdoll
 			else
 			{
 				j.slerpDrive = Drive(wristSpin, wristSpinDamp, wristTorque);
+			}
+		}
+
+		public void Reframe()
+		{
+			if (flopped)
+			{
+				FlopFrame();
 			}
 		}
 
@@ -5267,7 +5327,7 @@ namespace Ragdoll
 			{
 				return true;
 			}
-			if (!rb.isKinematic || rb.GetComponentInParent<NetProp>() || rb.GetComponentInParent<AvatarBody>())
+			if (!rb.isKinematic || rb.GetComponent<Hazard>() || rb.GetComponentInParent<NetProp>() || rb.GetComponentInParent<AvatarBody>())
 			{
 				return false;
 			}
@@ -6583,7 +6643,7 @@ namespace Ragdoll
 				{
 					continue;
 				}
-				if (hits[i].distance < bestDist)
+				if (hits[i].distance < bestDist && !Character(hits[i].collider))
 				{
 					bestDist = hits[i].distance;
 					best = hits[i].collider;
@@ -6672,7 +6732,10 @@ namespace Ragdoll
 				}
 			}
 			grounded = isGrounded;
-			FellThrough(best, pos);
+			if (!floating)
+			{
+				FellThrough(best, pos);
+			}
 			if (jumped && (grounded || flopped || holding || gripping))
 			{
 				jumped = false;
@@ -6877,7 +6940,7 @@ namespace Ragdoll
 			{
 				lostFloorSince = Time.time;
 			}
-			else if (safeKnown && playSpace && Time.time - lostFloorSince > rescueAfter && Time.time - rescuedAt > rescueCooldown
+			else if (!floating && safeKnown && playSpace && Time.time - lostFloorSince > rescueAfter && Time.time - rescuedAt > rescueCooldown
 				&& !(Water.main && pos.y > Water.main.Surface - 10f)
 				&& !(knockedOut && Water.Over(pos))
 				&& !Physics.Raycast(pos + Vector3.up * 0.2f, Vector3.down, 300f, -1, QueryTriggerInteraction.Ignore))
@@ -6939,7 +7002,17 @@ namespace Ragdoll
 			float neckY = playSpace ? playSpace.InverseTransformPoint(neck).y : neck.y;
 			if (grounded && !holding && !snapped)
 			{
-				neckStand = neckStandKnown ? Mathf.Max(neckY, neckStand + Time.fixedDeltaTime * -0.01f) : neckY;
+				if (neckStandKnown)
+				{
+					// Standing height rises at standRise per second, and only creeps down once the neck is back near it.
+					float rise = Mathf.Min(neckY, neckStand + standRise * Time.fixedDeltaTime);
+					float sink = neckStand - neckY < 0.1f ? Time.fixedDeltaTime * 0.01f : 0f;
+					neckStand = Mathf.Max(rise, neckStand - sink);
+				}
+				else
+				{
+					neckStand = neckY;
+				}
 				neckStandKnown = true;
 			}
 			crouch = neckStandKnown ? Mathf.Clamp01((neckStand - neckY) / Mathf.Max(tuckDepth, 0.05f)) : 0f;
@@ -7341,7 +7414,12 @@ namespace Ragdoll
 
 		private Vector3 HipRef(Rigidbody upper, Vector3 off)
 		{
-			return goalPos + goalRot * off;
+			Vector3 at = goalPos;
+			if (grounded)
+			{
+				at.y = Mathf.Max(at.y, floorY + crouchLow);
+			}
+			return at + goalRot * off;
 		}
 
 		private void Leg(Rigidbody upper, Rigidbody lower, Transform end, Vector3 hip, Quaternion restUpper, Quaternion restLower, float phase, float amp, Vector3 dir, Vector3 side, float len, bool walking, float ankle, ref Vector3 plant, ref bool planted, ref float floorAt)
@@ -7444,6 +7522,34 @@ namespace Ragdoll
 			PointRot(lower, Quaternion.AngleAxis(lowerAngle, side) * restLower);
 		}
 
+		private bool Character(Collider c)
+		{
+			if (!c.attachedRigidbody)
+			{
+				return false;
+			}
+			Player p = c.GetComponentInParent<Player>();
+			if (p)
+			{
+				if (!dummy && !p.dummy)
+				{
+					return false;
+				}
+				return !p.flopped && !p.knockedOut && !p.dead;
+			}
+			NetworkNpc npc = c.GetComponentInParent<NetworkNpc>();
+			if (npc)
+			{
+				return !npc.Down;
+			}
+			NetworkPlayer np = dummy ? c.GetComponentInParent<NetworkPlayer>() : null;
+			if (!np || !np.Object || !np.Object.IsValid)
+			{
+				return false;
+			}
+			return !np.Limp;
+		}
+
 		private float FloorAt(Vector3 at, float fallback)
 		{
 			int count = Physics.RaycastNonAlloc(at, Vector3.down, hits, hipReach, -1, QueryTriggerInteraction.Ignore);
@@ -7466,7 +7572,7 @@ namespace Ragdoll
 				{
 					continue;
 				}
-				if (hits[i].distance < best)
+				if (hits[i].distance < best && !Character(hits[i].collider))
 				{
 					best = hits[i].distance;
 				}
@@ -8452,7 +8558,8 @@ namespace Ragdoll
 				{
 					return false;
 				}
-				return forearm;
+				// Torso contact with the arms only counts on dummies, or when selfClash is on.
+				return forearm && (dummy || selfClash);
 			}
 			if (ka == 3 || kb == 3)
 			{
@@ -8465,7 +8572,7 @@ namespace Ragdoll
 				{
 					return false;
 				}
-				return noHead;
+				return noHead && (dummy || selfClash);
 			}
 			// Torso against torso only; legs collide with neither.
 			return ga == 0 && gb == 0;
@@ -8914,6 +9021,14 @@ namespace Ragdoll
 				shieldOnRise = !dummy;
 				autoRiseUntil = Time.time + 4f;
 			}
+			if (carriedHold)
+			{
+				handedOver = true;
+			}
+			else if ((!knockedOut && !flopped) || SlapDummy.Hauls(this))
+			{
+				handedOver = false;
+			}
 			limpArms = knockedOut || dead || limpWhenIdle || (limpOnRise && rising) || Time.time < looseUntil || (inVR && (away || (parkedL && parkedR)));
 			stars.on = knockedOut && !dead;
 			stars.dead = dead;
@@ -9092,7 +9207,7 @@ namespace Ragdoll
 			return Hit.KnockedOut;
 		}
 
-		public Hit TakeHit(Rigidbody bone, float impulse, float speed, Vector3 from, int verdict = -1, float at = -1f, int by = -1, bool kick = false, bool fist = false, bool touched = true)
+		public Hit TakeHit(Rigidbody bone, float impulse, float speed, Vector3 from, int verdict = -1, float at = -1f, int by = -1, bool kick = false, bool fist = false, bool touched = true, bool over = false)
 		{
 			bool ramp = fist && punchRamp;
 			if (!bone || dead)
@@ -9201,7 +9316,7 @@ namespace Ragdoll
 					return Hit.Blocked;
 				}
 			}
-			float hurt = Hurt(bone == head, false, impulse, speed, kick, fist);
+			float hurt = Hurt(bone == head, false, impulse, speed, kick, fist, over);
 			if (!dummy)
 			{
 				Both(Mathf.Lerp(0.2f, 0.6f, hurt / Threshold()), 0.06f);
@@ -9280,7 +9395,7 @@ namespace Ragdoll
 
 		private void OnApplicationFocus(bool has)
 		{
-			if (!Application.isEditor)
+			if (!Application.isEditor && Application.platform != RuntimePlatform.WindowsPlayer)
 			{
 				away = !has;
 			}
@@ -9318,11 +9433,11 @@ namespace Ragdoll
 			return add + damage >= Threshold();
 		}
 
-		public float Hurt(bool onHead, bool onArm, float impulse, float speed, bool kick = false, bool fist = false)
+		public float Hurt(bool onHead, bool onArm, float impulse, float speed, bool kick = false, bool fist = false, bool over = false)
 		{
 			float k = fist && punchRamp ? Mathf.InverseLerp(PunchFrom, PunchFull, speed) : Mathf.InverseLerp(slapFrom, kick ? kickHard : minSpeed, speed);
-			float cap = kick ? 60f : hitCap;
-			return k * (Mathf.Min(cap, impulse) * (onHead ? headMul : (onArm ? armMul : bodyMul)));
+			float hit = over ? impulse : Mathf.Min(kick ? 60f : hitCap, impulse);
+			return k * (hit * (onHead ? headMul : (onArm ? armMul : bodyMul)));
 		}
 
 		public Hit Block(Vector3 at)
@@ -9396,7 +9511,7 @@ namespace Ragdoll
 			return ramp;
 		}
 
-		public void Launch(Vector3 dir, float impulse)
+		public void Launch(Vector3 dir, float impulse, float speed = 0f, float lift = 0f)
 		{
 			if (dead || Shielded())
 			{
@@ -9413,8 +9528,9 @@ namespace Ragdoll
 				return;
 			}
 			flat = flat.normalized;
-			float speed = Mathf.Lerp(kickLaunch.x, kickLaunch.y, Mathf.Clamp01((impulse - 30f) / 30f));
-			Note("dropkicked: launched " + speed.ToString("F1") + " m/s from a " + impulse.ToString("F0") + " Ns kick");
+			float launch = speed > 0f ? speed : Mathf.Lerp(kickLaunch.x, kickLaunch.y, Mathf.Clamp01((impulse - 30f) / 30f));
+			float rise = Mathf.Max(kickLift, lift);
+			Note("dropkicked: launched " + launch.ToString("F1") + " m/s from a " + impulse.ToString("F0") + " Ns kick");
 			Knock(Vector3.zero);
 			foreach (Rigidbody body in bodies)
 			{
@@ -9424,11 +9540,11 @@ namespace Ragdoll
 				}
 				Vector3 v = body.linearVelocity;
 				float along = Vector3.Dot(flat, v);
-				if (along < speed)
+				if (along < launch)
 				{
-					v += flat * (speed - along);
+					v += flat * (launch - along);
 				}
-				body.linearVelocity = new Vector3(v.x, Mathf.Max(v.y, kickLift), v.z);
+				body.linearVelocity = new Vector3(v.x, Mathf.Max(v.y, rise), v.z);
 			}
 		}
 
@@ -10515,7 +10631,7 @@ namespace Ragdoll
 			GameObject copy = Instantiate(full.gameObject, full.transform.parent);
 			copy.name = full.gameObject.name + " " + label;
 			SkinnedMeshRenderer skin = copy.GetComponent<SkinnedMeshRenderer>();
-			skin.sharedMesh = Headless(full.sharedMesh, cut, label);
+			skin.sharedMesh = Headless(Cosmetics.Whole(full.sharedMesh), cut, label);
 			skin.shadowCastingMode = ShadowCastingMode.Off;
 			skin.enabled = false;
 			return skin;
@@ -10676,8 +10792,9 @@ namespace Ragdoll
 			RaycastHit hit;
 			ballGrounded = Physics.SphereCast(rb.position, radius * 0.9f, Vector3.down, out hit, radius * 0.25f, -1, QueryTriggerInteraction.Ignore) && !hit.collider.transform.IsChildOf(transform) && hit.normal.y >= SteepY;
 			bool high = !low && hipY - floorY > rest + radius + 0.05f;
-			squat = chargeSquat * Mathf.Clamp01(jumpCharge * 2.5f);
-			legs = Mathf.Max(rest - tuck * crouch - (high ? vaultTuck : 0f) - squat, 0.05f);
+			float room = Mathf.Max(rest - tuck * crouch - (high ? vaultTuck : 0f) - 0.05f, 0f);
+			squat = Mathf.Min(Mathf.Max(chargeSquat * Mathf.Clamp01(jumpCharge * 2.5f), stickCrouch * CrouchDepth), room);
+			legs = Mathf.Max(rest - tuck * crouch - (high ? vaultTuck : 0f) - squat, Mathf.Clamp01(crouch) * (crouchLow - radius + sag - 0.05f) + 0.05f);
 			joint.targetPosition = new Vector3(0f, -legs, 0f);
 			if (jumped && !wasJumped)
 			{
@@ -10907,6 +11024,11 @@ namespace Ragdoll
 
 		private void FixedUpdateDrown()
 		{
+			if (floating)
+			{
+				underSince = -1f;
+				return;
+			}
 			if (drowned)
 			{
 				if (Time.time >= diedAt + respawnAfter && GameManager.match == null && !GameManager.Travelling)
@@ -10987,6 +11109,21 @@ namespace Ragdoll
 				underSince = -1f;
 				return;
 			}
+			if ((carriedHold || handedOver) && GameManager.Rounds && playSpace)
+			{
+				// Thrown in by a teammate: back to the spawn without a death.
+				bool carried = carriedHold;
+				handedOver = false;
+				underSince = -1f;
+				testDrown = false;
+				if (carried && NetworkPlayer.mine)
+				{
+					NetworkPlayer.mine.KeepBody();
+				}
+				trainHeld = false;
+				SendHome("a teammate put me in: " + why, true);
+				return;
+			}
 			bool live = !GameManager.Waiting && (!fellEarly || GameManager.RoundTime < 0f);
 			if (!dummy && GameManager.match != null)
 			{
@@ -11034,6 +11171,7 @@ namespace Ragdoll
 			}
 			drowned = true;
 			deaths++;
+			Audience.Cheer();
 			diedAt = Time.time;
 			underSince = -1f;
 			testDrown = false;
@@ -11076,14 +11214,14 @@ namespace Ragdoll
 			}
 		}
 
-		public void SendHome(string why)
+		public void SendHome(string why, bool clear = false)
 		{
 			if (!pelvis || !playSpace)
 			{
 				return;
 			}
 			LetGo(why);
-			Vector3 delta = spawnPelvis - pelvis.position;
+			Vector3 delta = spawnPelvis + (clear ? SpawnShift() : Vector3.zero) - pelvis.position;
 			Shift(delta);
 			playSpace.position += delta;
 			if (!dummy)
@@ -11317,13 +11455,17 @@ namespace Ragdoll
 			{
 				return;
 			}
+			if (ghostMat && cosmetics != null && ghostMat.GetColor("_BaseColor") != cosmetics.color)
+			{
+				ghostMat.SetColor("_BaseColor", cosmetics.color);
+			}
 			bool live = showLive && playSpace && inVR;
 			if (live && (!ghostGrabL || !ghostGrabR))
 			{
 				ghostGrabL = leftHand ? leftHand.GetComponent<HandGrab>() : null;
 				ghostGrabR = rightHand ? rightHand.GetComponent<HandGrab>() : null;
 			}
-			bool ghosting = on && !easing;
+			bool ghosting = (on && !easing) || floating;
 			bool showL = ghosting;
 			bool showR = ghosting;
 			if (live && !ghosting)
@@ -11388,6 +11530,69 @@ namespace Ragdoll
 			scale0 = playSpace.localScale.x;
 			mid0 = (controllerL.position + controllerR.position) * 0.5f;
 			midLocal = playSpace.InverseTransformPoint(mid0);
+		}
+
+		public void Float(bool on)
+		{
+			if (floating == on)
+			{
+				return;
+			}
+			floating = on;
+			frozen = on;
+			if (on)
+			{
+				floatGrav.Clear();
+				foreach (Rigidbody rb in GetComponentsInChildren<Rigidbody>())
+				{
+					if (rb.useGravity)
+					{
+						rb.useGravity = false;
+						floatGrav.Add(rb);
+					}
+					if (!rb.isKinematic)
+					{
+						rb.linearVelocity = Vector3.zero;
+						rb.angularVelocity = Vector3.zero;
+					}
+				}
+			}
+			else
+			{
+				foreach (Rigidbody rb in floatGrav)
+				{
+					if (rb)
+					{
+						rb.useGravity = true;
+					}
+				}
+				floatGrav.Clear();
+			}
+			if (on)
+			{
+				floatHid.Clear();
+				foreach (Renderer r in GetComponentsInChildren<Renderer>())
+				{
+					if (!r.enabled || (controllerL && r.transform.IsChildOf(controllerL)) || (controllerR && r.transform.IsChildOf(controllerR)))
+					{
+						continue;
+					}
+					r.enabled = false;
+					floatHid.Add(r);
+				}
+			}
+			else
+			{
+				foreach (Renderer r in floatHid)
+				{
+					if (r)
+					{
+						r.enabled = true;
+					}
+				}
+				floatHid.Clear();
+			}
+			Shapes(on || showLive || this.on);
 		}
 
 		private void Shapes(bool show)
@@ -11903,11 +12108,7 @@ namespace Ragdoll
 
 		private void JumpInput()
 		{
-			bool pressed = false;
-			if (!ignoreInput && rightDevice.isValid && rightDevice.TryGetFeatureValue(UnityEngine.XR.CommonUsages.primaryButton, out bool button))
-			{
-				pressed = button;
-			}
+			bool pressed = !ignoreInput && Either(rightDevice, UnityEngine.XR.CommonUsages.primaryButton, UnityEngine.XR.CommonUsages.primary2DAxisClick);
 			bool down;
 			if (frozen || pressed)
 			{
@@ -11950,18 +12151,18 @@ namespace Ragdoll
 			{
 				return;
 			}
-			bool pressed = leftDevice.isValid && leftDevice.TryGetFeatureValue(UnityEngine.XR.CommonUsages.secondaryButton, out bool left) && left;
-			if (rightDevice.isValid && rightDevice.TryGetFeatureValue(UnityEngine.XR.CommonUsages.secondaryButton, out bool right) && right)
-			{
-				pressed = true;
-			}
+			bool left = Either(leftDevice, UnityEngine.XR.CommonUsages.secondaryButton, UnityEngine.XR.CommonUsages.primary2DAxisClick);
+			bool right = rightDevice.isValid && rightDevice.TryGetFeatureValue(UnityEngine.XR.CommonUsages.secondaryButton, out bool rightButton) && rightButton;
+			// A button already claimed by the sandbox or a cosmetic dummy doesn't recentre.
+			bool pressed = (left && !Sandbox.Busy(XRNode.LeftHand) && !CosmeticDummy.Busy(XRNode.LeftHand))
+				|| (right && !Sandbox.Busy(XRNode.RightHand) && !CosmeticDummy.Busy(XRNode.RightHand));
 			if (Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame)
 			{
 				pressed = true;
 			}
 			if (!pressed)
 			{
-				heldRecentre = false;
+				heldRecentre = left || right;
 				return;
 			}
 			if (heldRecentre)
@@ -12346,6 +12547,7 @@ namespace Ragdoll
 				legs = -(Mathf.Sign(turn.y) * Mathf.InverseLerp(kickFrom, kickFull, Mathf.Abs(turn.y)));
 			}
 			airLegs = legs;
+			stickCrouch = grounded && !frozen && Mathf.Abs(turn.x) < -turn.y ? Mathf.InverseLerp(CrouchFrom, CrouchFull, -turn.y) : 0f;
 			if (Prefs.noTurn)
 			{
 				snapReady = false;
@@ -12852,6 +13054,19 @@ namespace Ragdoll
 				device = InputDevices.GetDeviceAtXRNode(node);
 			}
 			return device.TryGetFeatureValue(UnityEngine.XR.CommonUsages.primary2DAxis, out Vector2 axis) ? axis : Vector2.zero;
+		}
+
+		public static bool Either(UnityEngine.XR.InputDevice d, InputFeatureUsage<bool> button, InputFeatureUsage<bool> spare)
+		{
+			if (!d.isValid)
+			{
+				return false;
+			}
+			if (d.TryGetFeatureValue(button, out bool pressed))
+			{
+				return pressed;
+			}
+			return d.TryGetFeatureValue(spare, out bool held) && held;
 		}
 
 		public static void Hand(XRNode node, float amplitude, float seconds)

@@ -11,11 +11,11 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 164437c82c0c88a4ab4bf268cb917193, type: 3}
   m_Name: LckSettings
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier:
   ShowSetupWizard: 1
-  DismissedUpdateVersion: 
+  DismissedUpdateVersion:
   LastShownOverviewVersion: 1.4.7
-  DismissedNotificationBarVersion: 
+  DismissedNotificationBarVersion:
   TrackingId: 254c83d3-c8fd-45da-9ae7-09041370bf3e
   GameName: Knuckleheads
   RecordingFilenamePrefix: KnuckleheadsClip

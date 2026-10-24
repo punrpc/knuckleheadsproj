@@ -85,7 +85,7 @@ Shader "Island/Belt" {
 			float4 _TrainLampColor[2];
 			float _TrainLamps;
 
-			// Height fog: x = fog top height, y = fully fogged height.
+			// Height fog: x = fog top height, y = fully fogged height, z = distance-fog colour blend.
 			float4 _HeightFog;
 			half4 _HeightFogColor;
 
@@ -196,11 +196,16 @@ Shader "Island/Belt" {
 				return light;
 			}
 
-			float3 ApplyHeightFog(float3 color, float heightWS)
+			float3 ApplyHeightFog(float3 color, float3 positionWS)
 			{
-				float fog = saturate((_HeightFog.x - heightWS) / max(_HeightFog.x - _HeightFog.y, 0.01));
+				// With _HeightFog.z > 0 the height-fog colour blends toward the distance-fog colour far from the camera.
+				float distanceFog = length(positionWS - _WorldSpaceCameraPos) * unity_FogParams.x;
+				distanceFog = (1.0 - exp2(-distanceFog * distanceFog)) * _HeightFog.z;
+				float3 fogColor = 0.0 < _HeightFog.z ? lerp(_HeightFogColor.rgb, unity_FogColor.rgb, distanceFog) : _HeightFogColor.rgb;
+
+				float fog = saturate((_HeightFog.x - positionWS.y) / max(_HeightFog.x - _HeightFog.y, 0.01));
 				fog = fog * fog * (3.0 - 2.0 * fog) * _HeightFogColor.a;
-				return lerp(color, _HeightFogColor.rgb, fog);
+				return lerp(color, fogColor, fog);
 			}
 
 			// Rotates a loop-space point into the frame of one of the four belt sides:
@@ -310,7 +315,7 @@ Shader "Island/Belt" {
 				lighting = input.vertexLight * aoDirect + lighting;
 				float3 color = lighting * albedo;
 				color = MixFog(color, input.fogFactor);
-				color = ApplyHeightFog(color, input.positionWS.y);
+				color = ApplyHeightFog(color, input.positionWS);
 				return half4(color, 1.0);
 			}
 			ENDHLSL

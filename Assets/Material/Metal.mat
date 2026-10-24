@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Metal
-  m_Shader: {fileID: 4800000, guid: fa2ee8c57e9b3694bb93b86b5c2ae5c4, type: 3}
+  m_Shader: {fileID: 4800000, guid: a3dd177c82717944a8bf83ae06e77f7e, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -27,7 +27,7 @@ Material:
     m_Ints: {}
     m_Floats:
       _Ambient: 1
-      _Bottom: -15.96
+      _Bottom: -0.5
       _CamClip: 0
       _DstBlend: 0
       _FadeEnd: 20
@@ -38,13 +38,13 @@ Material:
       _PixelLights: 0
       _SrcBlend: 1
       _StaticAO: 0
-      _Top: 0.45
+      _Top: 1.96
       _WorldSpace: 0
       _Wrap: 0.5
       _ZWrite: 1
     m_Colors:
-      _BottomColor: {r: 0.5396226, g: 0.15568526, b: 0.10487003, a: 1}
-      _Direction: {r: 0, g: 1, b: 0, a: 0}
-      _TopColor: {r: 0.85660374, g: 0.3221986, b: 0.25051606, a: 1}
+      _BottomColor: {r: 0.6226415, g: 0.6226415, b: 0.6226415, a: 1}
+      _Direction: {r: 1, g: 0, b: 0, a: 0}
+      _TopColor: {r: 0.4339623, g: 0.4339623, b: 0.4339623, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 0

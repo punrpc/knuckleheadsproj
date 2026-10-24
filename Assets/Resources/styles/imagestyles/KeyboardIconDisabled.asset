@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: KeyboardIconDisabled
   m_EditorClassIdentifier:
   enabled: 1
-  icon: {fileID: 2800000, guid: 1d2c90f8541fb0d48ba15eb17d09c222, type: 3}
+  icon: {fileID: 2800000, guid: 2100fb8566556c640965ab4351779e74, type: 3}
   sprite: {fileID: 0}
   color: {r: 0.34509805, g: 0.34509805, b: 0.34509805, a: 1}
   colorHover: {r: 0.34509805, g: 0.34509805, b: 0.34509805, a: 1}
